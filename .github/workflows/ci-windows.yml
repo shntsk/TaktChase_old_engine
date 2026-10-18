@@ -43,11 +43,76 @@ jobs:
       - name: Verify that both rendering paths are in the build
         shell: pwsh
         run: |
-          # OpenGL (GLRenderer) and Veldrid (Vulkan/D3D11) ship in the same ppy.osu.Framework package.
+          # What is checked (static evidence only; nothing here runs a renderer):
+          #  1. osu.Framework.dll is in the output. GLRenderer (OpenGL) and VeldridRenderer (Vulkan/D3D11/Metal)
+          #     are both compiled into this single assembly, so their type and namespace names must appear in
+          #     its metadata strings.
+          #  2. The generated TaktChase.Desktop.deps.json (the resolved runtime dependency graph) contains
+          #     ppy.Veldrid and ppy.Veldrid.SPIRV as direct dependencies of ppy.osu.Framework, plus the Veldrid
+          #     binding packages (ppy.Veldrid.OpenGLBindings, ppy.Veldrid.MetalBindings, ppy.Vk).
+          #  3. Every managed runtime asset that deps.json lists for those packages exists in the output, and the
+          #     native SPIR-V library listed for this RID exists under runtimes/.
+          # File names are read from deps.json. The Veldrid assemblies are named "ppy.Veldrid*.dll" (the NuGet
+          # package IDs), so a "Veldrid*.dll" glob can never match them.
+          $ErrorActionPreference = 'Stop'
           $out = "TaktChase.Desktop/bin/Release/net10.0"
+          $depsPath = "$out/TaktChase.Desktop.deps.json"
+          $rid = "win-x64"
+
           if (-not (Test-Path "$out/osu.Framework.dll")) { throw "osu.Framework.dll missing in $out" }
-          if (-not (Get-ChildItem $out -Filter "Veldrid*.dll")) { throw "Veldrid*.dll missing in $out" }
-          Write-Host "osu.Framework.dll and Veldrid*.dll are present."
+          if (-not (Test-Path $depsPath)) { throw "$depsPath missing (resolved dependency graph was not generated)" }
+
+          $bytes = [System.IO.File]::ReadAllBytes((Resolve-Path "$out/osu.Framework.dll").Path)
+          $text = [System.Text.Encoding]::GetEncoding(28591).GetString($bytes)
+          foreach ($s in @("GLRenderer", "VeldridRenderer", "osu.Framework.Graphics.OpenGL", "osu.Framework.Graphics.Veldrid")) {
+            if (-not $text.Contains($s)) { throw "'$s' not found in osu.Framework.dll metadata" }
+            Write-Host "osu.Framework.dll contains '$s'"
+          }
+
+          $deps = Get-Content $depsPath -Raw | ConvertFrom-Json -AsHashtable
+          $target = @($deps['targets'].Values)[0]
+
+          # Each package key in the resolved target looks like "<id>/<version>".
+          function Get-PackageKey([string]$id) {
+            @($target.Keys | Where-Object { $_.StartsWith("$id/") }) | Select-Object -First 1
+          }
+
+          $fwKey = Get-PackageKey "ppy.osu.Framework"
+          if (-not $fwKey) { throw "ppy.osu.Framework is not in the resolved dependency graph" }
+          Write-Host "Resolved: $fwKey"
+
+          foreach ($id in @("ppy.Veldrid", "ppy.Veldrid.SPIRV")) {
+            $fwDeps = $target[$fwKey]['dependencies']
+            if (-not ($fwDeps -and $fwDeps.ContainsKey($id))) { throw "$id is not a dependency of $fwKey in $depsPath" }
+          }
+
+          foreach ($id in @("ppy.Veldrid", "ppy.Veldrid.SPIRV", "ppy.Veldrid.OpenGLBindings", "ppy.Veldrid.MetalBindings", "ppy.Vk")) {
+            $key = Get-PackageKey $id
+            if (-not $key) { throw "$id is not in the resolved dependency graph" }
+            $runtime = $target[$key]['runtime']
+            if (-not $runtime -or $runtime.Count -eq 0) { throw "$key lists no managed runtime assets in deps.json" }
+            foreach ($asset in $runtime.Keys) {
+              $f = "$out/" + (Split-Path -Leaf $asset)
+              if (-not (Test-Path $f)) { throw "${key}: runtime asset $asset not found as $f" }
+              Write-Host "$key -> $f"
+            }
+          }
+
+          $spirvKey = Get-PackageKey "ppy.Veldrid.SPIRV"
+          $natives = @()
+          $rts = $target[$spirvKey]['runtimeTargets']
+          if ($rts) {
+            foreach ($rt in $rts.GetEnumerator()) {
+              if ($rt.Value['rid'] -eq $rid -and $rt.Value['assetType'] -eq 'native') { $natives += $rt.Key }
+            }
+          }
+          if ($natives.Count -eq 0) { throw "$spirvKey lists no native asset for $rid in deps.json" }
+          foreach ($n in $natives) {
+            if (-not (Test-Path "$out/$n")) { throw "native asset $n for $rid not found in $out" }
+            Write-Host "$spirvKey native ($rid) -> $out/$n"
+          }
+
+          Write-Host "Both rendering paths are present: GLRenderer and VeldridRenderer in osu.Framework.dll, Veldrid runtime dependencies resolved and copied."
 
       - name: Test
         run: dotnet test TaktChase.sln -c Release --no-build --logger "console;verbosity=normal"

@@ -33,7 +33,7 @@ jobs:
       image: archlinux:latest
     steps:
       - name: Install dependencies (pacman)
-        run: pacman -Syu --noconfirm --needed git dotnet-sdk-10.0
+        run: pacman -Syu --noconfirm --needed git jq dotnet-sdk-10.0
 
       - uses: actions/checkout@v7
 
@@ -49,12 +49,71 @@ jobs:
         run: dotnet build TaktChase.sln -c Release --no-restore
 
       - name: Verify that both rendering paths are in the build
+        shell: bash
         run: |
-          # OpenGL (GLRenderer) and Veldrid (Vulkan) ship in the same ppy.osu.Framework package.
+          # What is checked (static evidence only; nothing here runs a renderer):
+          #  1. osu.Framework.dll is in the output. GLRenderer (OpenGL) and VeldridRenderer (Vulkan/D3D11/Metal)
+          #     are both compiled into this single assembly, so their type and namespace names must appear in
+          #     its metadata strings.
+          #  2. The generated TaktChase.Desktop.deps.json (the resolved runtime dependency graph) contains
+          #     ppy.Veldrid and ppy.Veldrid.SPIRV as direct dependencies of ppy.osu.Framework, plus the Veldrid
+          #     binding packages (ppy.Veldrid.OpenGLBindings, ppy.Veldrid.MetalBindings, ppy.Vk).
+          #  3. Every managed runtime asset that deps.json lists for those packages exists in the output, and the
+          #     native SPIR-V library listed for this RID exists under runtimes/.
+          # File names are read from deps.json. The Veldrid assemblies are named "ppy.Veldrid*.dll" (the NuGet
+          # package IDs), so a "Veldrid*.dll" glob can never match them.
+          set -euo pipefail
           out="TaktChase.Desktop/bin/Release/net10.0"
-          test -f "$out/osu.Framework.dll" || { echo "osu.Framework.dll missing in $out"; exit 1; }
-          ls "$out"/Veldrid*.dll > /dev/null || { echo "Veldrid*.dll missing in $out"; exit 1; }
-          echo "osu.Framework.dll and Veldrid*.dll are present."
+          deps="$out/TaktChase.Desktop.deps.json"
+          rid="linux-x64"
+          fail() { echo "::error::$*"; exit 1; }
+
+          [ -f "$out/osu.Framework.dll" ] || fail "osu.Framework.dll missing in $out"
+          [ -f "$deps" ] || fail "$deps missing (resolved dependency graph was not generated)"
+
+          for s in GLRenderer VeldridRenderer osu.Framework.Graphics.OpenGL osu.Framework.Graphics.Veldrid; do
+            LC_ALL=C grep -aqF -- "$s" "$out/osu.Framework.dll" || fail "'$s' not found in osu.Framework.dll metadata"
+            echo "osu.Framework.dll contains '$s'"
+          done
+
+          # Each package key in the resolved target looks like "<id>/<version>".
+          pkg_key() {
+            jq -r --arg id "$1" '.targets | to_entries[0].value | keys[] | select(startswith($id + "/"))' "$deps"
+          }
+
+          fw_key="$(pkg_key ppy.osu.Framework)"
+          [ -n "$fw_key" ] || fail "ppy.osu.Framework is not in the resolved dependency graph"
+          echo "Resolved: $fw_key"
+
+          for id in ppy.Veldrid ppy.Veldrid.SPIRV; do
+            jq -e --arg fw "$fw_key" --arg id "$id" \
+              '.targets | to_entries[0].value[$fw].dependencies | has($id)' "$deps" > /dev/null \
+              || fail "$id is not a dependency of $fw_key in $deps"
+          done
+
+          for id in ppy.Veldrid ppy.Veldrid.SPIRV ppy.Veldrid.OpenGLBindings ppy.Veldrid.MetalBindings ppy.Vk; do
+            key="$(pkg_key "$id")"
+            [ -n "$key" ] || fail "$id is not in the resolved dependency graph"
+            assets="$(jq -r --arg k "$key" '.targets | to_entries[0].value[$k].runtime // {} | keys[]' "$deps")"
+            [ -n "$assets" ] || fail "$key lists no managed runtime assets in deps.json"
+            for asset in $assets; do
+              f="$out/$(basename "$asset")"
+              [ -f "$f" ] || fail "$key: runtime asset $asset not found as $f"
+              echo "$key -> $f"
+            done
+          done
+
+          spirv_key="$(pkg_key ppy.Veldrid.SPIRV)"
+          natives="$(jq -r --arg k "$spirv_key" --arg rid "$rid" \
+            '.targets | to_entries[0].value[$k].runtimeTargets // {} | to_entries[]
+             | select(.value.rid == $rid and .value.assetType == "native") | .key' "$deps")"
+          [ -n "$natives" ] || fail "$spirv_key lists no native asset for $rid in deps.json"
+          for n in $natives; do
+            [ -f "$out/$n" ] || fail "native asset $n for $rid not found in $out"
+            echo "$spirv_key native ($rid) -> $out/$n"
+          done
+
+          echo "Both rendering paths are present: GLRenderer and VeldridRenderer in osu.Framework.dll, Veldrid runtime dependencies resolved and copied."
 
       - name: Test
         run: dotnet test TaktChase.sln -c Release --no-build --logger "console;verbosity=normal"

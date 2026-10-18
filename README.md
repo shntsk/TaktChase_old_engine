@@ -125,11 +125,31 @@ environment, the framework obeys them even with `--renderer=auto`, and TaktChase
 
 - **To build:** only the .NET SDK and the NuGet packages. `ppy.osu.Framework` already contains the code for both
   rendering paths (OpenGL and Veldrid/Vulkan); there is no build option that turns a backend on or off, and none is silently
-  disabled. CI confirms that `osu.Framework.dll` and `Veldrid*.dll` are present.
+  disabled. CI statically verifies the build output (see [CI rendering verification](#ci-rendering-verification)).
+
 - **To run Vulkan:** the system needs a **Vulkan loader** (`libvulkan.so.1` /
   `vulkan-1.dll`) **and** a GPU **Vulkan driver**. A successful build does not imply that either exists.
   TaktChase assumes nothing: with `--renderer=vulkan` it runs a pre-check (loads the loader, creates
   an instance, enumerates devices) for diagnostics only; the final proof is the framework's own initialization.
+
+### CI rendering verification
+
+The Veldrid assemblies are **not** named `Veldrid*.dll`: they carry the NuGet package IDs (`ppy.Veldrid.dll`,
+`ppy.Veldrid.SPIRV.dll`, and so on), so an earlier filename glob could never match. The "Verify that both rendering paths are
+in the build" step in both workflows now checks, without running any renderer:
+
+1. `osu.Framework.dll` exists in `TaktChase.Desktop/bin/Release/net10.0`, and its metadata contains the type names `GLRenderer`
+   and `VeldridRenderer` and the namespaces `osu.Framework.Graphics.OpenGL` / `osu.Framework.Graphics.Veldrid`. Both renderers
+   are compiled into this one assembly (they are `internal` classes).
+2. The generated `TaktChase.Desktop.deps.json` (the resolved runtime dependency graph) lists `ppy.Veldrid` and
+   `ppy.Veldrid.SPIRV` as dependencies of `ppy.osu.Framework`, and also contains `ppy.Veldrid.OpenGLBindings`,
+   `ppy.Veldrid.MetalBindings`, and `ppy.Vk`.
+3. Every managed runtime asset that `deps.json` lists for those packages exists in the output folder, and the native
+   `libveldrid-spirv` library listed for the CI platform (`linux-x64` / `win-x64`) exists under `runtimes/`.
+
+File names come from `deps.json`, not from assumptions. This is evidence about packaging only. It does **not** show that either
+renderer initializes, that a Vulkan loader or driver exists, or that shaders compile; those still require running on a real GPU
+(see `docs/validation-plan.md`). The check is a name-based inspection of metadata strings, not a full metadata parse.
 
 ### Packages and drivers (verified on the Arch package pages and in Microsoft's documentation)
 
