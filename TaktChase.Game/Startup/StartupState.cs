@@ -4,15 +4,15 @@ using System.Collections.Generic;
 namespace TaktChase.Game.Startup;
 
 /// <summary>
-/// Estado de inicialização compartilhado entre o launcher e o jogo.
+/// Startup state shared between the launcher and the game.
 /// </summary>
 public static class StartupState
 {
     private static volatile bool completed;
 
     /// <summary>
-    /// Verdadeiro depois que a janela, o renderer e a cena inicial foram criados com sucesso.
-    /// Exceções posteriores a esse ponto NÃO são tratadas como falha de inicialização de renderer.
+    /// True once the window, the renderer, and the initial screen have been created successfully.
+    /// Exceptions after this point are NOT treated as a renderer startup failure.
     /// </summary>
     public static bool Completed => completed;
 

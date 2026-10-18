@@ -1,12 +1,12 @@
 name: CI Arch Linux x86_64
 
-# Executa dentro de um container Arch Linux REAL (imagem oficial archlinux:latest) com o .NET SDK
-# do repositório oficial do Arch (pacman). Atenção: o kernel é o do runner Ubuntu hospedeiro;
-# o que é validado é o userspace Arch (pacotes, glibc, toolchain), não um Arch instalado em máquina.
-# Não há GPU física: nenhum backend gráfico é executado em hardware real aqui.
+# Runs inside a REAL Arch Linux container (the official archlinux:latest image) with the .NET SDK
+# from the official Arch repository (pacman). Note: the kernel is the host Ubuntu runner's kernel;
+# what is validated is the Arch userspace (packages, glibc, toolchain), not an Arch installation on a machine.
+# There is no physical GPU: no graphics backend runs on real hardware here.
 #
-# O pacote é "dotnet-sdk-10.0" (linha versionada do repositório extra) e não o meta-pacote "dotnet-sdk":
-# o global.json exige SDK 10.0.x, e o meta-pacote passará a ser outra versão maior no futuro.
+# The package is "dotnet-sdk-10.0" (the versioned line in the extra repository), not the "dotnet-sdk"
+# meta-package: global.json requires SDK 10.0.x, and the meta-package will move to a newer major version in the future.
 
 on:
   push:
@@ -26,18 +26,18 @@ env:
 
 jobs:
   build-test:
-    name: Build e testes (container Arch Linux, sem GPU)
+    name: Build and test (Arch Linux container, no GPU)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     container:
       image: archlinux:latest
     steps:
-      - name: Instalar dependências (pacman)
+      - name: Install dependencies (pacman)
         run: pacman -Syu --noconfirm --needed git dotnet-sdk-10.0
 
       - uses: actions/checkout@v7
 
-      - name: Versões instaladas
+      - name: Installed versions
         run: |
           pacman -Qs '^dotnet'
           dotnet --info
@@ -48,16 +48,16 @@ jobs:
       - name: Build (Release)
         run: dotnet build TaktChase.sln -c Release --no-restore
 
-      - name: Verificar que os dois caminhos de renderização estão no build
+      - name: Verify that both rendering paths are in the build
         run: |
-          # OpenGL (GLRenderer) e Veldrid (Vulkan) vêm no mesmo pacote ppy.osu.Framework.
+          # OpenGL (GLRenderer) and Veldrid (Vulkan) ship in the same ppy.osu.Framework package.
           out="TaktChase.Desktop/bin/Release/net10.0"
-          test -f "$out/osu.Framework.dll" || { echo "osu.Framework.dll ausente em $out"; exit 1; }
-          ls "$out"/Veldrid*.dll > /dev/null || { echo "Veldrid*.dll ausente em $out"; exit 1; }
-          echo "osu.Framework.dll e Veldrid*.dll presentes."
+          test -f "$out/osu.Framework.dll" || { echo "osu.Framework.dll missing in $out"; exit 1; }
+          ls "$out"/Veldrid*.dll > /dev/null || { echo "Veldrid*.dll missing in $out"; exit 1; }
+          echo "osu.Framework.dll and Veldrid*.dll are present."
 
-      - name: Testes
+      - name: Test
         run: dotnet test TaktChase.sln -c Release --no-build --logger "console;verbosity=normal"
 
-      - name: Aviso sobre cobertura
-        run: echo "CI validou compilação e testes headless em userspace Arch. Não validou OpenGL/Vulkan em GPU física."
+      - name: Coverage notice
+        run: echo "CI validated compilation and headless tests on Arch userspace. It did not validate OpenGL/Vulkan on a physical GPU."

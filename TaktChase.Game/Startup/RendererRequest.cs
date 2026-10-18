@@ -1,17 +1,17 @@
 namespace TaktChase.Game.Startup;
 
 /// <summary>
-/// Backend gráfico pedido pelo usuário (argumento <c>--renderer=</c>).
-/// É apenas o que foi PEDIDO; o backend efetivamente inicializado vem sempre do host do framework.
+/// Graphics backend requested by the user (the <c>--renderer=</c> argument).
+/// This is only what was REQUESTED; the backend that was actually initialized always comes from the framework host.
 /// </summary>
 public enum RendererRequest
 {
-    /// <summary>Estratégia de seleção e fallback do próprio framework.</summary>
+    /// <summary>The framework's own selection and fallback strategy.</summary>
     Auto,
 
-    /// <summary>GLRenderer (OpenGL) oficial do framework.</summary>
+    /// <summary>The framework's official GLRenderer (OpenGL).</summary>
     OpenGL,
 
-    /// <summary>VeldridRenderer com superfície Vulkan oficial do framework.</summary>
+    /// <summary>The framework's official VeldridRenderer with a Vulkan surface.</summary>
     Vulkan,
 }

@@ -13,22 +13,22 @@ public class StartupFailureTest
     [Test]
     public void TestSummarizeIncludesRootCauseWhenDifferent()
     {
-        var exception = new InvalidOperationException("externa", new DllNotFoundException("libvulkan.so.1"));
+        var exception = new InvalidOperationException("outer", new DllNotFoundException("libvulkan.so.1"));
 
         string summary = StartupFailure.Summarize(exception);
 
-        Assert.That(summary, Does.Contain("InvalidOperationException: externa"));
+        Assert.That(summary, Does.Contain("InvalidOperationException: outer"));
         Assert.That(summary, Does.Contain("DllNotFoundException: libvulkan.so.1"));
     }
 
     [Test]
     public void TestSummarizeUnwrapsSingleInnerAggregateAndKeepsOneLine()
     {
-        var exception = new AggregateException(new InvalidOperationException("linha 1\nlinha 2"));
+        var exception = new AggregateException(new InvalidOperationException("line 1\nline 2"));
 
         string summary = StartupFailure.Summarize(exception);
 
-        Assert.That(summary, Does.StartWith("InvalidOperationException: linha 1"));
+        Assert.That(summary, Does.StartWith("InvalidOperationException: line 1"));
         Assert.That(summary, Does.Not.Contain("\n"));
     }
 
@@ -52,7 +52,7 @@ public class StartupFailureTest
     [Test]
     public void TestFallbackRunNeverOffersAnotherRestart()
     {
-        // Proteção contra ciclo de reinicialização: mesmo que o pedido fosse Vulkan, uma execução marcada como fallback não reinicia.
+        // Protection against a restart loop: even if the request was Vulkan, a run marked as a fallback does not restart.
         var options = LaunchOptions.Parse(new[] { "--renderer=vulkan" }, name => name == LaunchOptions.FALLBACK_FROM_ENV ? "Vulkan" : null);
 
         Assert.That(StartupFailure.ShouldOfferOpenGLFallback(options), Is.False);
@@ -61,10 +61,10 @@ public class StartupFailureTest
     [Test]
     public void TestDiagnosisShowsRequestedRendererAndReason()
     {
-        string diagnosis = StartupFailure.BuildDiagnosis(parse("--renderer=vulkan"), "motivo-x", null, Array.Empty<string>());
+        string diagnosis = StartupFailure.BuildDiagnosis(parse("--renderer=vulkan"), "reason-x", null, Array.Empty<string>());
 
-        Assert.That(diagnosis, Does.Contain("Renderer solicitado: Vulkan"));
-        Assert.That(diagnosis, Does.Contain("motivo-x"));
+        Assert.That(diagnosis, Does.Contain("Requested renderer: Vulkan"));
+        Assert.That(diagnosis, Does.Contain("reason-x"));
         Assert.That(diagnosis, Does.Contain("--renderer=opengl"));
     }
 
@@ -74,15 +74,15 @@ public class StartupFailureTest
         string? environment(string name) => name switch
         {
             LaunchOptions.FALLBACK_FROM_ENV => "Vulkan",
-            LaunchOptions.FALLBACK_REASON_ENV => "causa-original-vulkan",
+            LaunchOptions.FALLBACK_REASON_ENV => "original-vulkan-cause",
             _ => null,
         };
 
         var options = LaunchOptions.Parse(new[] { "--renderer=opengl" }, environment);
-        string diagnosis = StartupFailure.BuildDiagnosis(options, "falha-do-opengl", null, new List<string>());
+        string diagnosis = StartupFailure.BuildDiagnosis(options, "opengl-failure", null, new List<string>());
 
-        Assert.That(diagnosis, Does.Contain("falha-do-opengl"));
-        Assert.That(diagnosis, Does.Contain("causa-original-vulkan"));
+        Assert.That(diagnosis, Does.Contain("opengl-failure"));
+        Assert.That(diagnosis, Does.Contain("original-vulkan-cause"));
     }
 
     [Test]

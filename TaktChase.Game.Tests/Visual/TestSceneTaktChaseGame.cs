@@ -7,7 +7,7 @@ public partial class TestSceneTaktChaseGame : TaktChaseTestScene
     [BackgroundDependencyLoader]
     private void load()
     {
-        // AddGame já chama SetupLogging e SetHost; chamar SetHost manualmente registraria os handlers do host em duplicidade.
+        // AddGame already calls SetupLogging and SetHost; calling SetHost manually would register the host handlers twice.
         AddGame(new TaktChaseGame());
     }
 }

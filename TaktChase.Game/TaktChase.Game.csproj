@@ -6,9 +6,13 @@
   </PropertyGroup>
   <ItemGroup>
     <!--
-      Um único pacote traz os dois caminhos de renderização (GLRenderer / OpenGL e
-      VeldridRenderer / Vulkan, Direct3D 11, Metal). Não existe opção de compilação
-      que ligue ou desligue um backend: ambos entram sempre no build.
+      A single package provides both rendering paths (GLRenderer / OpenGL and
+      VeldridRenderer / Vulkan, Direct3D 11, Metal). There is no build option
+      that enables or disables a backend: both are always part of the build.
+
+      This version depends on SixLabors.ImageSharp (>= 3.1.11), which has published
+      security advisories. See docs/dependency-audit.md for the review and the
+      reason no override is applied.
     -->
     <PackageReference Include="ppy.osu.Framework" Version="2026.1008.0" />
   </ItemGroup>

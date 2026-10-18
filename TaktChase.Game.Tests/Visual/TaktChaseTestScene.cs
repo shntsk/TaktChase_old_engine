@@ -3,9 +3,9 @@ using osu.Framework.Testing;
 namespace TaktChase.Game.Tests.Visual;
 
 /// <summary>
-/// Base das cenas de teste visuais do TaktChase. Faz o mesmo que <c>TemplateGameTestScene</c> do template oficial:
-/// roda cada cena dentro de um jogo derivado de <see cref="TaktChaseGameBase"/>, para que recursos embutidos
-/// (texturas do TaktChase.Resources) e a escala de tela da base compartilhada estejam disponíveis nos testes.
+/// Base class for TaktChase's visual test scenes. It does the same as <c>TemplateGameTestScene</c> in the official template:
+/// it runs each scene inside a game derived from <see cref="TaktChaseGameBase"/>, so that embedded resources
+/// (textures from TaktChase.Resources) and the shared base's screen scaling are available in the tests.
 /// </summary>
 public abstract partial class TaktChaseTestScene : TestScene
 {

@@ -4,18 +4,18 @@ using System.Collections.Generic;
 namespace TaktChase.Game.Startup;
 
 /// <summary>
-/// Traduz <see cref="RendererRequest"/> nas variáveis de ambiente OFICIAIS do osu-framework
-/// (wiki "Environment variables"): <c>OSU_GRAPHICS_RENDERER</c> e <c>OSU_GRAPHICS_SURFACE</c>.
+/// Translates a <see cref="RendererRequest"/> into the OFFICIAL osu-framework environment variables
+/// (wiki "Environment variables"): <c>OSU_GRAPHICS_RENDERER</c> and <c>OSU_GRAPHICS_SURFACE</c>.
 /// </summary>
 /// <remarks>
-/// O framework lê essas variáveis no construtor estático de <c>FrameworkEnvironment</c>,
-/// portanto elas precisam ser definidas ANTES de qualquer chamada ao framework (antes de criar o host).
-/// Quando qualquer uma delas está definida, <c>GameHost.ChooseAndSetupRenderer</c> usa exatamente
-/// o par renderer/superfície pedido e falha de forma definitiva, sem fallback interno.
-/// Se só a superfície for definida, o renderer assumido é "veldrid"; se só o renderer for definido,
-/// a superfície assumida é OpenGL. Por isso o TaktChase sempre define as DUAS variáveis.
-/// Valor de superfície inválido é ignorado em silêncio pelo framework (Enum.TryParse), e valor de renderer
-/// desconhecido cai no GLRenderer.
+/// The framework reads these variables in the static constructor of <c>FrameworkEnvironment</c>,
+/// so they must be set BEFORE any call into the framework (before the host is created).
+/// When either is set, <c>GameHost.ChooseAndSetupRenderer</c> uses exactly the requested
+/// renderer/surface pair and fails permanently, with no internal fallback.
+/// If only the surface is set, the assumed renderer is "veldrid"; if only the renderer is set,
+/// the assumed surface is OpenGL. That is why TaktChase always sets BOTH variables.
+/// An invalid surface value is silently ignored by the framework (Enum.TryParse), and an unknown renderer
+/// value falls back to GLRenderer.
 /// </remarks>
 public static class RendererEnvironment
 {
@@ -23,17 +23,17 @@ public static class RendererEnvironment
     public const string SURFACE_VARIABLE = "OSU_GRAPHICS_SURFACE";
 
     /// <summary>
-    /// Variáveis a definir para o pedido. Para <see cref="RendererRequest.Auto"/> não se define nada,
-    /// para que o framework execute a própria seleção e o próprio fallback.
+    /// Variables to set for the request. Nothing is set for <see cref="RendererRequest.Auto"/>,
+    /// so the framework runs its own selection and its own fallback.
     /// </summary>
     public static IReadOnlyDictionary<string, string> GetVariables(RendererRequest request)
     {
         switch (request)
         {
             case RendererRequest.OpenGL:
-                // GLRenderer (renderer OpenGL "legado" do framework); só suporta a superfície opengl.
-                // "gl" é o valor com ramo explícito em GameHost.SetupRendererAndWindow(string, GraphicsSurfaceType);
-                // "opengl" também é documentado na wiki, mas só funcionaria por cair no ramo padrão do switch.
+                // GLRenderer (the framework's "legacy" OpenGL renderer); it only supports the opengl surface.
+                // "gl" is the value with an explicit branch in GameHost.SetupRendererAndWindow(string, GraphicsSurfaceType);
+                // "opengl" is also documented on the wiki, but it would only work by falling into the switch's default branch.
                 return new Dictionary<string, string>
                 {
                     [RENDERER_VARIABLE] = "gl",
@@ -41,7 +41,7 @@ public static class RendererEnvironment
                 };
 
             case RendererRequest.Vulkan:
-                // VeldridRenderer + superfície Vulkan.
+                // VeldridRenderer + Vulkan surface.
                 return new Dictionary<string, string>
                 {
                     [RENDERER_VARIABLE] = "veldrid",
@@ -54,8 +54,8 @@ public static class RendererEnvironment
     }
 
     /// <summary>
-    /// Verdadeiro se o ambiente já traz uma escolha de renderer/superfície feita fora do TaktChase.
-    /// Nesse caso o framework a obedece (sem fallback), mesmo com <c>--renderer=auto</c>.
+    /// True if the environment already carries a renderer/surface choice made outside TaktChase.
+    /// In that case the framework obeys it (without fallback), even with <c>--renderer=auto</c>.
     /// </summary>
     public static bool HasExternalOverride(Func<string, string?> getEnvironmentVariable)
         => !string.IsNullOrEmpty(getEnvironmentVariable(RENDERER_VARIABLE))

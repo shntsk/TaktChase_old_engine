@@ -1,18 +1,19 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using TaktChase.Game.Graphics;
 
 namespace TaktChase.Game.Startup;
 
 /// <summary>
-/// Monta o diagnóstico legível quando o host do framework não consegue inicializar o renderer.
-/// Lógica pura (sem framework), coberta por testes.
+/// Builds the readable diagnosis shown when the framework host cannot initialize the renderer.
+/// Pure logic (no framework dependency), covered by tests.
 /// </summary>
 public static class StartupFailure
 {
     private const int max_summary_length = 400;
 
-    /// <summary>Resumo de uma linha da exceção, incluindo a causa raiz quando diferente.</summary>
+    /// <summary>One-line summary of the exception, including the root cause when it differs.</summary>
     public static string Summarize(Exception exception)
     {
         Exception top = exception;
@@ -40,7 +41,7 @@ public static class StartupFailure
         return $"{exception.GetType().Name}: {message}";
     }
 
-    /// <summary>Verdadeiro se faz sentido oferecer o reinício automático com OpenGL.</summary>
+    /// <summary>True if offering the automatic OpenGL restart makes sense.</summary>
     public static bool ShouldOfferOpenGLFallback(LaunchOptions options)
         => options.Renderer == RendererRequest.Vulkan && !options.NoFallback && !options.IsFallbackRun;
 
@@ -48,18 +49,18 @@ public static class StartupFailure
     {
         var text = new StringBuilder();
 
-        text.AppendLine("TaktChase: falha ao inicializar o renderer.");
-        text.AppendLine($"Renderer solicitado: {options.Renderer}");
-        text.AppendLine($"Motivo: {reason}");
+        text.AppendLine("TaktChase: startup failure. The renderer could not be initialized.");
+        text.AppendLine($"Requested renderer: {options.Renderer}");
+        text.AppendLine($"Failure reason: {reason}");
 
-        // Esta execução pode ser o reinício de um fallback: a causa da falha ORIGINAL não pode se perder.
+        // This run may be the restart of a fallback: the cause of the ORIGINAL failure must not be lost.
         if (options.IsFallbackRun)
-            text.AppendLine($"Falha original ({options.FallbackFrom}, que motivou este reinício): {options.FallbackReason ?? "n/d"}");
+            text.AppendLine($"Original failure ({options.FallbackFrom}, which caused this restart): {options.FallbackReason ?? GraphicsReport.NOT_AVAILABLE}");
 
         if (probe != null)
         {
             text.AppendLine();
-            text.AppendLine("Pré-verificação Vulkan:");
+            text.AppendLine("Vulkan pre-check:");
 
             foreach (string line in probe.ToLines())
                 text.AppendLine("  " + line);
@@ -68,7 +69,7 @@ public static class StartupFailure
         if (frameworkErrors.Count > 0)
         {
             text.AppendLine();
-            text.AppendLine("Erros registrados pelo framework durante a inicialização:");
+            text.AppendLine("Errors logged by the framework during initialization:");
 
             foreach (string line in frameworkErrors)
                 text.AppendLine("  " + line);
@@ -79,23 +80,23 @@ public static class StartupFailure
         switch (options.Renderer)
         {
             case RendererRequest.Vulkan:
-                text.AppendLine("Verifique o loader Vulkan e o driver da GPU (por exemplo, executando vulkaninfo).");
+                text.AppendLine("Check the Vulkan loader and the GPU driver (for example, by running vulkaninfo).");
 
                 if (ShouldOfferOpenGLFallback(options))
-                    text.AppendLine("Fallback: o jogo será reiniciado com --renderer=opengl. Use --no-fallback para desativar.");
+                    text.AppendLine("Fallback: the game will restart with --renderer=opengl. Use --no-fallback to disable this.");
                 else if (options.IsFallbackRun)
-                    text.AppendLine("Esta execução já era um fallback; nenhum novo reinício será feito.");
+                    text.AppendLine("This run was already a fallback; no further restart will be attempted.");
                 else
-                    text.AppendLine("Fallback desativado (--no-fallback). Reinicie com --renderer=opengl ou --renderer=auto.");
+                    text.AppendLine("Fallback disabled (--no-fallback). Restart with --renderer=opengl or --renderer=auto.");
 
                 break;
 
             case RendererRequest.OpenGL:
-                text.AppendLine("Verifique o driver OpenGL da GPU. Tente --renderer=auto para a seleção do framework.");
+                text.AppendLine("Check the GPU's OpenGL driver. Try --renderer=auto to use the framework's own selection.");
                 break;
 
             default:
-                text.AppendLine("O framework percorreu a própria ordem de fallback e nenhum renderer inicializou.");
+                text.AppendLine("The framework went through its own fallback order and no renderer initialized.");
                 break;
         }
 

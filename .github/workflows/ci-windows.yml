@@ -1,7 +1,7 @@
 name: CI Windows x64
 
-# Valida restore, build e testes automatizados no Windows x64 (runner GitHub-hosted, Windows Server).
-# Não há GPU física neste runner: nenhum backend gráfico é executado em hardware real aqui.
+# Validates restore, build, and automated tests on Windows x64 (GitHub-hosted runner, Windows Server).
+# There is no physical GPU on this runner: no graphics backend runs on real hardware here.
 
 on:
   push:
@@ -21,7 +21,7 @@ env:
 
 jobs:
   build-test:
-    name: Build e testes (Windows x64, sem GPU)
+    name: Build and test (Windows x64, no GPU)
     runs-on: windows-latest
     timeout-minutes: 30
     steps:
@@ -31,7 +31,7 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
-      - name: Informações do SDK
+      - name: SDK information
         run: dotnet --info
 
       - name: Restore
@@ -40,18 +40,18 @@ jobs:
       - name: Build (Release)
         run: dotnet build TaktChase.sln -c Release --no-restore
 
-      - name: Verificar que os dois caminhos de renderização estão no build
+      - name: Verify that both rendering paths are in the build
         shell: pwsh
         run: |
-          # OpenGL (GLRenderer) e Veldrid (Vulkan/D3D11) vêm no mesmo pacote ppy.osu.Framework.
+          # OpenGL (GLRenderer) and Veldrid (Vulkan/D3D11) ship in the same ppy.osu.Framework package.
           $out = "TaktChase.Desktop/bin/Release/net10.0"
-          if (-not (Test-Path "$out/osu.Framework.dll")) { throw "osu.Framework.dll ausente em $out" }
-          if (-not (Get-ChildItem $out -Filter "Veldrid*.dll")) { throw "Veldrid*.dll ausente em $out" }
-          Write-Host "osu.Framework.dll e Veldrid*.dll presentes."
+          if (-not (Test-Path "$out/osu.Framework.dll")) { throw "osu.Framework.dll missing in $out" }
+          if (-not (Get-ChildItem $out -Filter "Veldrid*.dll")) { throw "Veldrid*.dll missing in $out" }
+          Write-Host "osu.Framework.dll and Veldrid*.dll are present."
 
-      - name: Testes
+      - name: Test
         run: dotnet test TaktChase.sln -c Release --no-build --logger "console;verbosity=normal"
 
-      - name: Aviso sobre cobertura
+      - name: Coverage notice
         shell: pwsh
-        run: Write-Host "CI validou compilação e testes headless. Não validou OpenGL/Vulkan em GPU física."
+        run: Write-Host "CI validated compilation and headless tests. It did not validate OpenGL/Vulkan on a physical GPU."

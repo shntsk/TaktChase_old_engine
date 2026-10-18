@@ -1,52 +1,54 @@
-# TaktChase — Etapa 0 (fundação)
+# TaktChase — Stage 0 (foundation)
 
-Jogo de ritmo baseado em precisão temporal, mira e leitura de objetos, em C# sobre o
-[osu-framework](https://github.com/ppy/osu-framework). Esta etapa entrega apenas a **fundação**:
-janela, tela inicial, seleção de backend OpenGL/Vulkan, diagnóstico gráfico e CI. Não há parser de
-beatmaps, gameplay, sliders, skins, resultados nem multiplayer.
+A rhythm game built on temporal precision, aiming, and object reading, written in C# on top of
+[osu-framework](https://github.com/ppy/osu-framework). This stage delivers only the **foundation**:
+window, home screen, OpenGL/Vulkan backend selection, graphics diagnostics, and CI. There is no beatmap parser,
+gameplay, sliders, skins, results screen, or multiplayer.
 
-> **Estado de validação:** nada foi compilado nem testado na criação nem na revisão estática deste pacote.
-> Compilação e testes headless são validados pelos workflows de CI; OpenGL/Vulkan em GPU real exigem os
-> testes manuais de [`docs/validation-plan.md`](docs/validation-plan.md). **Não há afirmação de
-> compatibilidade universal.** A revisão estática que originou esta versão está resumida em
-> [`docs/revisao-estatica.md`](docs/revisao-estatica.md).
+> **Validation status:** nothing in this package has been compiled or tested by the author, neither when it was created
+> nor during the static reviews. Compilation and headless tests are validated by the CI workflows; OpenGL/Vulkan on a real GPU
+> require the manual tests in [`docs/validation-plan.md`](docs/validation-plan.md). **No claim of universal
+> compatibility is made.** The static review that produced this version is summarized in
+> [`docs/static-review.md`](docs/static-review.md). Known dependency advisories are documented in
+> [`docs/dependency-audit.md`](docs/dependency-audit.md).
 
-## Versões e como foram verificadas
+## Versions and how they were verified
 
-Verificadas em 18/10/2026 nas fontes oficiais (páginas do NuGet, repositório `ppy/osu-framework` na tag
-`2026.1008.0` e documentação do .NET). Nada foi escolhido por palpite:
+Verified on 2026-10-18 against official sources (NuGet pages, the `ppy/osu-framework` repository at tag
+`2026.1008.0`, and the .NET documentation). Nothing was chosen by guesswork:
 
-| Item | Versão | Fonte |
+| Item | Version | Source |
 |---|---|---|
-| `ppy.osu.Framework` | **2026.1008.0** (a mais recente no NuGet; alvo `net10.0`) | nuget.org/packages/ppy.osu.Framework |
-| `ppy.osu.Framework.Templates` | 2026.1008.0 (mesma versão do framework) | nuget.org/packages/ppy.osu.Framework.Templates |
-| .NET | `net10.0`; SDK `10.0.100` com `rollForward: latestFeature` | `global.json` idêntico ao do repositório do framework na tag; o README do framework pede o .NET 10 SDK |
-| `Microsoft.NET.Test.Sdk` | **18.8.1** | `TemplateGame.Game.Tests.csproj` do template; versão listada no NuGet |
-| `NUnit3TestAdapter` | **6.2.0** | idem; última estável no NuGet |
-| `NUnit` | **sem referência direta** (≥ 4.6.1, transitivo) | o template não referencia o NUnit; a dependência vem de `ppy.osu.Framework` (NUnit ≥ 4.6.1 na lista de dependências do NuGet) |
+| `ppy.osu.Framework` | **2026.1008.0** (the latest on NuGet; targets `net10.0`) | nuget.org/packages/ppy.osu.Framework |
+| `ppy.osu.Framework.Templates` | 2026.1008.0 (same version as the framework) | nuget.org/packages/ppy.osu.Framework.Templates |
+| .NET | `net10.0`; SDK `10.0.100` with `rollForward: latestFeature` | `global.json` identical to the framework repository's at that tag; the framework README requires the .NET 10 SDK |
+| `Microsoft.NET.Test.Sdk` | **18.8.1** | `TemplateGame.Game.Tests.csproj` from the template; version listed on NuGet |
+| `NUnit3TestAdapter` | **6.2.0** | same; latest stable on NuGet |
+| `NUnit` | **no direct reference** (≥ 4.6.1, transitive) | the template does not reference NUnit; the dependency comes from `ppy.osu.Framework` (NUnit ≥ 4.6.1 in its NuGet dependency list) |
+| `SixLabors.ImageSharp` | **3.1.11, transitive** (the framework declares `>= 3.1.11`) | has published security advisories; see [`docs/dependency-audit.md`](docs/dependency-audit.md) |
 
-Estrutura (mesma organização do template: Game / Desktop / Game.Tests / Resources):
+Structure (same organization as the template: Game / Desktop / Game.Tests / Resources):
 
 ```
 TaktChase.sln
-TaktChase.Game/       lógica do jogo, tela inicial, diagnóstico, seleção de backend
-TaktChase.Desktop/    ponto de entrada fino (WinExe)
-TaktChase.Game.Tests/ test browser visual, cenas de teste e testes unitários (NUnit)
-TaktChase.Resources/  texturas embutidas (marca própria do TaktChase)
+TaktChase.Game/       game logic, home screen, diagnostics, backend selection
+TaktChase.Desktop/    thin entry point (WinExe)
+TaktChase.Game.Tests/ visual test browser, test scenes, and unit tests (NUnit)
+TaktChase.Resources/  embedded textures (TaktChase's own logo mark)
 .github/workflows/    ci-windows.yml, ci-arch.yml
-docs/validation-plan.md
+docs/                 validation-plan.md, static-review.md, dependency-audit.md
 ```
 
-> O template foi reproduzido à mão (`dotnet new` não foi executado) e depois comparado, de forma estática, com os
-> arquivos publicados em `osu.Framework.Templates/templates/template-empty` na tag `2026.1008.0`.
-> Diferenças deliberadas em relação ao template: sem projetos iOS/Android, sem `game.ico` (o ícone do template é
-> da ppy), sem `.slnf`, `.vscode`, `.idea` e `*.DotSettings`; o executável chama-se `TaktChase.Desktop`
-> (no template, `TemplateGame`); o `Main` do Desktop recebe `args`, com `[STAThread]` como no `SampleGame.Desktop`
-> do próprio framework; `GenerateDocumentationFile` não é ligado.
-> Se preferir, gere um projeto de referência com `dotnet new install ppy.osu.Framework.Templates` e
-> `dotnet new osu-framework-game -n Referencia` e compare.
+> The template was reproduced by hand (`dotnet new` was not run) and then compared statically with the files published in
+> `osu.Framework.Templates/templates/template-empty` at tag `2026.1008.0`.
+> Deliberate differences from the template: no iOS/Android projects, no `game.ico` (the template's icon belongs to ppy),
+> no `.slnf`, `.vscode`, `.idea`, or `*.DotSettings`; the executable is named `TaktChase.Desktop`
+> (`TemplateGame` in the template); the Desktop `Main` receives `args`, with `[STAThread]` as in the framework's own
+> `SampleGame.Desktop`; `GenerateDocumentationFile` is not enabled.
+> If you prefer, generate a reference project with `dotnet new install ppy.osu.Framework.Templates` and
+> `dotnet new osu-framework-game -n Reference` and compare.
 
-## Como compilar e executar (na sua máquina)
+## How to build and run (on your machine)
 
 ```
 dotnet restore
@@ -54,154 +56,161 @@ dotnet build -c Release
 dotnet run --project TaktChase.Desktop -c Release -- --renderer=opengl --show-fps
 ```
 
-## Seleção de OpenGL e Vulkan
+## OpenGL and Vulkan selection
 
-A seleção acontece em `TaktChaseLauncher.Run`, **antes** de criar o host gráfico, usando apenas os
-mecanismos oficiais documentados na wiki "Environment variables" do framework.
+Selection happens in `TaktChaseLauncher.Run`, **before** the graphics host is created, using only the official
+mechanisms documented on the framework's "Environment variables" wiki page.
 
-| Argumento | O que o TaktChase faz | O que o framework executa |
+| Argument | What TaktChase does | What the framework runs |
 |---|---|---|
-| `--renderer=auto` (padrão) | Não define nada | `GameHost.ChooseAndSetupRenderer` com a ordem de fallback do próprio framework |
-| `--renderer=opengl` | `OSU_GRAPHICS_RENDERER=gl`, `OSU_GRAPHICS_SURFACE=opengl` | `GLRenderer` (OpenGL), sem fallback interno |
-| `--renderer=vulkan` | `OSU_GRAPHICS_RENDERER=veldrid`, `OSU_GRAPHICS_SURFACE=vulkan` | `VeldridRenderer` com superfície Vulkan, sem fallback interno |
+| `--renderer=auto` (default) | Sets nothing | `GameHost.ChooseAndSetupRenderer` with the framework's own fallback order |
+| `--renderer=opengl` | `OSU_GRAPHICS_RENDERER=gl`, `OSU_GRAPHICS_SURFACE=opengl` | `GLRenderer` (OpenGL), no internal fallback |
+| `--renderer=vulkan` | `OSU_GRAPHICS_RENDERER=veldrid`, `OSU_GRAPHICS_SURFACE=vulkan` | `VeldridRenderer` with a Vulkan surface, no internal fallback |
 
-Outros argumentos: `--show-fps` (mostra FPS/frametime na abertura) e `--no-fallback` (desativa o
-reinício com OpenGL quando o Vulkan falha).
+Other arguments: `--show-fps` (shows FPS/frame time at startup) and `--no-fallback` (disables the restart with
+OpenGL when Vulkan fails).
 
-**Importante sobre `auto`:** a ordem lida em `GameHost.GetPreferredRenderersForCurrentPlatform` é, no
-Windows, Direct3D 11 → D3D11 experimental → OpenGL → Vulkan experimental; no Linux, OpenGL → OpenGL
-experimental → Vulkan experimental. Portanto, **no Windows `auto` tende a escolher Direct3D 11**
-(via Veldrid), não OpenGL; no Linux tende a escolher OpenGL. Use `--renderer=opengl` ou
-`--renderer=vulkan` para forçar. Uma configuração `Renderer` já salva pelo framework (`framework.ini`)
-também pode alterar a ordem do `auto`.
+**Important note about `auto`:** the order read from `GameHost.GetPreferredRenderersForCurrentPlatform` is, on
+Windows, Direct3D 11 → experimental D3D11 → OpenGL → experimental Vulkan; on Linux, OpenGL → experimental OpenGL →
+experimental Vulkan. Therefore **on Windows `auto` tends to choose Direct3D 11** (through Veldrid), not OpenGL; on Linux
+it tends to choose OpenGL. Use `--renderer=opengl` or `--renderer=vulkan` to force a choice. A `Renderer` setting already
+saved by the framework (`framework.ini`) can also change the `auto` order.
 
-Detalhes confirmados no código da tag `2026.1008.0` (`FrameworkEnvironment` e `GameHost`):
+Details confirmed in the code at tag `2026.1008.0` (`FrameworkEnvironment` and `GameHost`):
 
-- `OSU_GRAPHICS_RENDERER` aceita `gl`/`opengl`, `veldrid` (e `deferred`, não usado aqui). O ramo explícito do
-  `switch` é `"gl"`; `"opengl"` só funciona por cair no ramo padrão, por isso o TaktChase usa `gl`. Um valor
-  desconhecido cai no `GLRenderer` sem aviso.
-- `OSU_GRAPHICS_SURFACE` é lido com `Enum.TryParse<GraphicsSurfaceType>` (sem diferenciar maiúsculas); valor
-  inválido vira "não definido" sem aviso.
-- Se só a superfície for definida, o renderer assumido é `veldrid`; se só o renderer for definido, a superfície
-  assumida é OpenGL. Por isso o TaktChase sempre define **as duas**.
-- `veldrid` + superfície `vulkan` leva a `GraphicsDevice.CreateVulkan` (`VeldridDevice`); **nada** seleciona o
-  Vulkan automaticamente em `VeldridRenderer`: a superfície é que decide o backend.
-- No modo automático o framework **não** tenta `VeldridRenderer`+Vulkan: a ordem inclui apenas `Deferred_Vulkan`
-  (renderer experimental). `--renderer=vulkan` do TaktChase testa, portanto, um caminho diferente do `auto`.
+- `OSU_GRAPHICS_RENDERER` accepts `gl`/`opengl` and `veldrid` (and `deferred`, not used here). The explicit branch of the
+  `switch` is `"gl"`; `"opengl"` only works by falling into the default branch, which is why TaktChase uses `gl`. An unknown
+  value falls back to `GLRenderer` without a warning.
+- `OSU_GRAPHICS_SURFACE` is read with `Enum.TryParse<GraphicsSurfaceType>` (case-insensitive); an invalid value becomes
+  "not set" without a warning.
+- If only the surface is set, the assumed renderer is `veldrid`; if only the renderer is set, the assumed surface is
+  OpenGL. That is why TaktChase always sets **both**.
+- `veldrid` + the `vulkan` surface leads to `GraphicsDevice.CreateVulkan` (`VeldridDevice`); **nothing** selects Vulkan
+  automatically in `VeldridRenderer`: the surface decides the backend.
+- In automatic mode the framework does **not** try `VeldridRenderer` + Vulkan: the order only includes `Deferred_Vulkan`
+  (an experimental renderer). TaktChase's `--renderer=vulkan` therefore exercises a different path from `auto`.
 
-As variáveis são lidas pelo framework uma única vez por processo (construtor estático de
-`FrameworkEnvironment`), por isso são definidas antes de qualquer chamada ao framework. Se
-`OSU_GRAPHICS_RENDERER`/`OSU_GRAPHICS_SURFACE` já estiverem definidas no ambiente, o framework as obedece
-mesmo com `--renderer=auto`, e o TaktChase registra um aviso.
+The variables are read by the framework only once per process (static constructor of `FrameworkEnvironment`), so they
+are set before any call into the framework. If `OSU_GRAPHICS_RENDERER`/`OSU_GRAPHICS_SURFACE` are already set in the
+environment, the framework obeys them even with `--renderer=auto`, and TaktChase logs a warning.
 
-## Fallback e limitações
+## Fallback and limitations
 
-- **`auto`:** o fallback é o do framework (tenta cada renderer da ordem acima até um inicializar). Se **todos**
-  falharem, `GameHost.Run` **não lança exceção**: registra "No usable renderer was found!" e retorna. O
-  `TaktChaseLauncher` detecta esse caso (`host.Renderer == null` sem a tela inicial ter carregado), mostra o
-  diagnóstico e encerra com código 2.
-- **`--renderer=vulkan`:** com as variáveis oficiais o framework falha de forma definitiva. O TaktChase
-  captura a exceção **somente se a falha ocorrer antes de a tela inicial carregar**, escreve o
-  diagnóstico (stderr, `%LOCALAPPDATA%/TaktChase/logs/startup-failure.log` ou equivalente em
-  `~/.local/share`, e caixa de diálogo no Windows) e **reinicia o processo** com `--renderer=opengl`,
-  informando o motivo na tela (painel F3 e indicador âmbar no chip do backend). O fallback só dispara após falha real, nunca
-  por suposição sobre drivers.
-- `--renderer=opengl` que falha **não** tem fallback: o erro é mostrado. Use `--renderer=auto`.
-- **Sem ciclo de reinício:** o processo filho é sempre iniciado com `--renderer=opengl` e com
-  `TAKTCHASE_FALLBACK_FROM` definida; nessas condições `ShouldOfferOpenGLFallback` é falso (coberto por teste).
-  Se o filho também falhar, o log dele vai para `startup-failure-fallback.log` (não sobrescreve o da falha
-  original) e o diagnóstico inclui a causa original.
-- **Argumentos repassados no reinício:** apenas `--renderer=opengl` e `--show-fps`. Os demais argumentos do
-  TaktChase não têm efeito após a falha (`--no-fallback` já foi considerado; argumentos desconhecidos só geram
-  aviso).
-- O fallback é por reinício de processo porque as variáveis do framework não podem ser trocadas no mesmo
-  processo; o framework não oferece um mecanismo oficial equivalente para "pedir Vulkan e cair para GL"
-  nesse modo.
-- Falhas que derrubam o processo dentro do driver (crash nativo) não podem ser capturadas por código C#.
-- A pré-verificação Vulkan carrega o loader do sistema, cria uma instância e o libera **no mesmo processo** em
-  que o framework depois inicializa o Vulkan. Não há como confirmar sem hardware que todos os drivers toleram
-  isso; está no plano de validação.
-- Uma falha **depois** da tela inicial carregada não é tratada como falha de renderer.
+- **`auto`:** the fallback is the framework's own (it tries each renderer in the order above until one initializes). If **all**
+  of them fail, `GameHost.Run` **does not throw**: it logs "No usable renderer was found!" and returns. The
+  `TaktChaseLauncher` detects this case (`host.Renderer == null` without the home screen having loaded), shows the
+  diagnosis, and exits with code 2.
+- **`--renderer=vulkan`:** with the official variables the framework fails permanently. TaktChase
+  catches the exception **only if the failure happens before the home screen loads**, writes the
+  diagnosis (stderr, `%LOCALAPPDATA%/TaktChase/logs/startup-failure.log` or the equivalent under
+  `~/.local/share`, and a dialog box on Windows) and **restarts the process** with `--renderer=opengl`,
+  showing the fallback reason on screen (F3 panel and an amber indicator on the backend chip). The fallback only triggers after a real
+  failure, never on assumptions about drivers.
+- A failing `--renderer=opengl` has **no** fallback: the error is shown. Use `--renderer=auto`.
+- **No restart loop:** the child process is always started with `--renderer=opengl` and with
+  `TAKTCHASE_FALLBACK_FROM` set; under those conditions `ShouldOfferOpenGLFallback` is false (covered by a test).
+  If the child also fails, its log goes to `startup-failure-fallback.log` (it does not overwrite the original failure's log)
+  and the diagnosis includes the original cause.
+- **Arguments passed on restart:** only `--renderer=opengl` and `--show-fps`. TaktChase's other arguments have no
+  effect after the failure (`--no-fallback` was already taken into account; unknown arguments only produce a warning).
+- The fallback is a process restart because the framework's variables cannot be changed within the same process; the framework
+  offers no official equivalent mechanism for "request Vulkan and fall back to GL" in this mode.
+- Failures that bring the process down inside the driver (native crashes) cannot be caught by C# code.
+- The Vulkan pre-check loads the system loader, creates an instance, and releases it **in the same process** in which the framework
+  later initializes Vulkan. Without hardware there is no way to confirm that every driver tolerates this; it is in
+  the validation plan.
+- A failure **after** the home screen has loaded is not treated as a renderer failure.
 
-## Compilar vs. executar Vulkan
+## Building vs. running Vulkan
 
-- **Para compilar:** apenas o SDK .NET e os pacotes NuGet. O `ppy.osu.Framework` já contém o código dos
-  dois caminhos de renderização (OpenGL e Veldrid/Vulkan); não existe opção de build que ligue/desligue um
-  backend, e nenhum é desativado em silêncio. O CI confirma a presença de `osu.Framework.dll` e `Veldrid*.dll`.
-- **Para executar Vulkan:** é necessário, no sistema, um **loader Vulkan** (`libvulkan.so.1` /
-  `vulkan-1.dll`) **e** um **driver Vulkan** da GPU. Compilar com sucesso não implica que isso exista.
-  O TaktChase não presume nada: com `--renderer=vulkan` ele faz uma pré-verificação (carrega o loader, cria
-  uma instância, enumera dispositivos) apenas como diagnóstico; a prova final é a inicialização do framework.
+- **To build:** only the .NET SDK and the NuGet packages. `ppy.osu.Framework` already contains the code for both
+  rendering paths (OpenGL and Veldrid/Vulkan); there is no build option that turns a backend on or off, and none is silently
+  disabled. CI confirms that `osu.Framework.dll` and `Veldrid*.dll` are present.
+- **To run Vulkan:** the system needs a **Vulkan loader** (`libvulkan.so.1` /
+  `vulkan-1.dll`) **and** a GPU **Vulkan driver**. A successful build does not imply that either exists.
+  TaktChase assumes nothing: with `--renderer=vulkan` it runs a pre-check (loads the loader, creates
+  an instance, enumerates devices) for diagnostics only; the final proof is the framework's own initialization.
 
-### Pacotes e drivers (verificados nas páginas de pacotes do Arch e na documentação da Microsoft)
+### Packages and drivers (verified on the Arch package pages and in Microsoft's documentation)
 
 **Arch Linux x86_64**
 
-- `dotnet-sdk-10.0` (linha versionada do repositório `extra`; o meta-pacote `dotnet-sdk` mudará de versão maior
-  no futuro e quebraria o `global.json`). Em páginas de pacotes consultadas em 18/10/2026 apareceram
-  `10.0.10.sdk110-1` (`dotnet-sdk`) e `10.0.8.sdk108-1` (`dotnet-sdk-10.0`, página mais antiga): a versão exata
-  muda com o tempo e **não foi confirmada para o instante da compilação**. A faixa `sdk1xx` ≥ 100 satisfaz o
-  `global.json` (`10.0.100`, `latestFeature`).
-- OpenGL: `mesa` (provê `opengl-driver`).
-- Vulkan na Intel UHD (Ice Lake, driver Mesa): `vulkan-intel`, que depende de `vulkan-icd-loader`.
-- Opcional para diagnóstico: `vulkan-tools` (ferramentas Vulkan). Confirme o binário com `pacman -Ql vulkan-tools | grep vulkaninfo`.
-- O README do framework pede ffmpeg do sistema no Linux apenas para decodificação de vídeo (não usado nesta etapa).
+- `dotnet-sdk-10.0` (the versioned line in the `extra` repository; the `dotnet-sdk` meta-package will move to a new major version
+  in the future and would break `global.json`). On the package pages consulted on 2026-10-18, `10.0.10.sdk110-1` (`dotnet-sdk`) and
+  `10.0.8.sdk108-1` (`dotnet-sdk-10.0`, an older page) appeared: the exact version changes over time and **was not confirmed for the moment
+  of the build**. The `sdk1xx` range ≥ 100 satisfies `global.json` (`10.0.100`, `latestFeature`).
+- OpenGL: `mesa` (provides `opengl-driver`).
+- Vulkan on Intel UHD (Ice Lake, Mesa driver): `vulkan-intel`, which depends on `vulkan-icd-loader`.
+- Optional for diagnostics: `vulkan-tools` (Vulkan tools). Confirm the binary with `pacman -Ql vulkan-tools | grep vulkaninfo`.
+- The framework README asks for the system ffmpeg on Linux only for video decoding (not used in this stage).
 
 **Windows x64**
 
-- Segundo `release-notes/10.0/supported-os.md` do repositório `dotnet/core` (atualizado em 28/09/2026), o .NET 10
-  é suportado em: **Windows 11** 26H1, 25H2, 24H2 e 23H2 (Enterprise/Education); **Windows 10** apenas nas
-  edições Enterprise/IoT/LTSC 1607, 1809 e 21H2; **Windows Server** 2025, 23H2, 2022, 2019, 2016, 2012 R2 e 2012
-  (as duas últimas com ESU). Windows 7 e 8.1 não constam. Arquitetura alvo do TaktChase: **x64**.
-- Esse documento lista as versões **suportadas pela Microsoft para o .NET**; não é uma garantia de que o
-  osu-framework, o SDL3 ou o driver gráfico funcionem em cada uma delas.
-- Arch Linux **não** consta na lista oficial de distribuições do .NET 10; o .NET no Arch vem dos pacotes da
-  própria distribuição.
-- OpenGL e Vulkan dependem do **driver gráfico do fabricante** (instalado pelo próprio usuário). **Não verificado:** onde o `vulkan-1.dll` é distribuído e qual versão de driver Intel expõe Vulkan para a UHD G1; confirme na documentação da Intel/Khronos antes de afirmar. O TaktChase não instala nem distribui drivers.
+- According to `release-notes/10.0/supported-os.md` in the `dotnet/core` repository (updated 2026-09-28), .NET 10
+  is supported on: **Windows 11** 26H1, 25H2, 24H2, and 23H2 (Enterprise/Education); **Windows 10** only in the
+  Enterprise/IoT/LTSC editions 1607, 1809, and 21H2; **Windows Server** 2025, 23H2, 2022, 2019, 2016, 2012 R2, and 2012
+  (the last two with ESU). Windows 7 and 8.1 are not listed. TaktChase's target architecture: **x64**.
+- That document lists the versions **supported by Microsoft for .NET**; it is not a guarantee that
+  osu-framework, SDL3, or the graphics driver work on each of them.
+- Arch Linux is **not** in the official list of distributions for .NET 10; .NET on Arch comes from the distribution's
+  own packages.
+- OpenGL and Vulkan depend on the vendor's **graphics driver** (installed by the user). **Not verified:** where `vulkan-1.dll` is distributed and which Intel driver version exposes Vulkan for the UHD G1; confirm in the Intel/Khronos documentation before claiming anything. TaktChase does not install or distribute drivers.
 
-## Diagnóstico em tempo de execução
+## Runtime diagnostics
 
-Tecla **F3** (ou o arquivo `diagnostics.txt` na pasta de dados do jogo) mostra apenas dados reais. O backend
-**efetivo** vem sempre do host já inicializado, nunca do argumento: `GameHost.RendererInfo`, o tipo de
-`host.Renderer` e `host.Window.GraphicsSurface.Type`. Há alertas quando o pedido (`--renderer`) diverge do que o host
-inicializou (superfície e tipo de renderer). Limite da API pública: as classes de renderer são internas ao
-framework, então o backend interno do Veldrid (`Device.BackendType`) não é consultável; a superfície `Vulkan`
-combinada com `VeldridRenderer` é a evidência disponível.
+The **F3** key (or the `diagnostics.txt` file in the game's data folder) shows real data only. The **active** renderer
+always comes from the already initialized host, never from the argument: `GameHost.RendererInfo` and the type name of
+`GameHost.Renderer`. Alerts appear when the request (`--renderer`) disagrees with the renderer type the host reports.
 
-- Renderer solicitado × backend efetivo (`GameHost.RendererInfo`), tipo do renderer, superfície gráfica da janela.
-- `ResolvedRenderer` (somente no modo automático: `GameHost` só o preenche nesse caminho), VSync do renderer.
-- Fallback (de qual backend, por quê) e avisos de divergência pedido × ativo.
-- Resultado da pré-verificação Vulkan (se pedido): loader, versão de instância, `vkCreateInstance`, nº de dispositivos.
-- Sistema, arquitetura, versão do .NET, processadores lógicos.
-- Linhas do log do framework com informações gráficas (versão/renderer/vendor do OpenGL etc.). O framework só as
-  registra no log; não há propriedade pública, então são exibidas como linhas de log, sem interpretação.
-- Memória (working set, heap GC, contagem de coletas), atualizada a cada 2 s com o painel aberto.
+What the report contains:
 
-**Não disponível via API pública verificada:** nome da GPU no Vulkan e limites do dispositivo. O painel mostra
-"n/d" ou omite o dado, nunca inventa. Use `vulkaninfo` e o log do framework para isso.
+- Requested renderer vs. active renderer (`GameHost.RendererInfo`), renderer type, and a **request check**
+  (consistent / partially verified / mismatch / unavailable).
+- Window presence (`GameHost.Window`; absent on headless hosts).
+- `ResolvedRenderer` (automatic mode only: `GameHost` only fills it on that path).
+- Fallback (from which backend, and the fallback reason) and mismatch alerts.
+- The Vulkan pre-check result (if requested): loader, instance version, `vkCreateInstance`, device count.
+- System, architecture, .NET version, logical processors.
+- Framework log lines with graphics information (OpenGL version/renderer/vendor, and so on). The framework only logs these;
+  there is no public property, so they are shown as log lines, without interpretation.
+- Memory (working set, GC heap, collection counts), refreshed every 2 s while the panel is open.
 
-**F2** liga/desliga FPS e frametime (relógio do thread de atualização). Para estatísticas por thread, use o
-overlay do framework (**Ctrl+F11**); Ctrl+F7 alterna o limitador de quadros. O TaktChase não impõe resolução,
-taxa de atualização nem limite de FPS.
+**Reported as unavailable (not exposed by the public API of `ppy.osu.Framework` 2026.1008.0):**
 
-## Desempenho
+- **Graphics surface.** `IWindow.GraphicsSurface` is not accessible from other assemblies (the CI build failed with
+  CS0122 when it was read). The report does not read it through reflection and does not infer it from `--renderer`.
+- **Renderer VSync state.** `IRenderer.VerticalSync` is not accessible either (CS0122), so the report says "Unavailable".
+- **Direct3D 11 vs. Vulkan under `VeldridRenderer`.** `VeldridRenderer` can drive several backends. With `--renderer=vulkan` and
+  `VeldridRenderer` active, the request check reads "Partially verified": the renderer type matches, but the
+  Vulkan surface itself is not confirmed. Use `vulkaninfo` and the framework log lines to confirm it.
+- GPU name under Vulkan and device limits.
 
-- Sem pós-processamento, shaders customizados nem dependências gráficas extras; apenas drawables do framework.
-- Um único asset carregado na tela inicial (marca de 256×256 px, ~3 KB); fonte padrão do framework.
-- Contadores só reescrevem texto a 4 Hz (FPS) e 0,5 Hz (memória, só com o painel aberto).
-- Animação do pulso: poucas transformações por segundo.
-- Janela redimensionável; conteúdo desenhado para 1920×1080 e escalado proporcionalmente (`DrawSizePreservingFillContainer`).
+The panel shows "Unavailable" or omits the datum; it never invents one.
+
+**F2** toggles FPS and frame time (update-thread clock). For per-thread statistics, use the framework's
+overlay (**Ctrl+F11**); Ctrl+F7 toggles the frame limiter. TaktChase does not impose a resolution,
+refresh rate, or FPS limit.
+
+## Performance
+
+- No post-processing, custom shaders, or extra graphics dependencies; only framework drawables.
+- A single asset loaded on the home screen (256×256 px logo mark, ~3 KB); the framework's default font.
+- The counters only rewrite text at 4 Hz (FPS) and 0.5 Hz (memory, only with the panel open).
+- Pulse animation: a few transforms per second.
+- Resizable window; content designed for 1920×1080 and scaled proportionally (`DrawSizePreservingFillContainer`).
 
 ## CI
 
-| Workflow | Ambiente | O que roda |
+| Workflow | Environment | What runs |
 |---|---|---|
-| `ci-windows.yml` | `windows-latest` (Windows Server x64) | restore, build Release, verificação de assemblies dos dois backends, `dotnet test` headless |
-| `ci-arch.yml` | `ubuntu-latest` com container oficial `archlinux:latest` + `pacman -S dotnet-sdk-10.0` | idem; o kernel é do runner Ubuntu, o userspace é Arch |
+| `ci-windows.yml` | `windows-latest` (Windows Server x64) | restore, Release build, check for the assemblies of both backends, headless `dotnet test` |
+| `ci-arch.yml` | `ubuntu-latest` with the official `archlinux:latest` container + `pacman -S dotnet-sdk-10.0` | same; the kernel is the Ubuntu runner's, the userspace is Arch |
 
-Nenhum workflow executa OpenGL/Vulkan em GPU física.
+No workflow runs OpenGL/Vulkan on a physical GPU. Restore will still print NuGet audit warnings for
+`SixLabors.ImageSharp` until the framework publishes a release that depends on a patched version; see
+[`docs/dependency-audit.md`](docs/dependency-audit.md). The warnings are not suppressed.
 
-## Licenças
+## Licenses
 
-O osu-framework é MIT. A biblioteca de áudio BASS (dependência) é produto comercial: gratuita para uso não
-comercial; obtenha licença para distribuição comercial. A licença do TaktChase ainda não foi definida.
+osu-framework is MIT-licensed. The BASS audio library (a dependency) is a commercial product: free for non-commercial use;
+obtain a license for commercial distribution. TaktChase itself is released under the MIT License (see [`LICENSE`](LICENSE)).

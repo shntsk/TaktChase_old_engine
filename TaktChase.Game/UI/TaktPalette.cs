@@ -3,8 +3,8 @@ using osuTK.Graphics;
 namespace TaktChase.Game.UI;
 
 /// <summary>
-/// Paleta escura e minimalista do TaktChase. Cores de acento inspiradas no sistema de cores
-/// da Apple (interface Cupertino), com o par ciano/rosa como identidade de ritmo.
+/// TaktChase's dark, minimalist palette. Accent colors are inspired by Apple's color system
+/// (Cupertino-style interface), with the cyan/pink pair as the rhythm identity.
 /// </summary>
 public static class TaktPalette
 {
@@ -15,10 +15,10 @@ public static class TaktPalette
     public static readonly Color4 TEXT_PRIMARY = new Color4(245, 245, 247, 255);
     public static readonly Color4 TEXT_SECONDARY = new Color4(142, 142, 147, 255);
 
-    /// <summary>Anel que "persegue" o alvo.</summary>
+    /// <summary>The ring that "chases" the target.</summary>
     public static readonly Color4 CHASE = new Color4(100, 210, 255, 255);
 
-    /// <summary>Alvo do toque.</summary>
+    /// <summary>The tap target.</summary>
     public static readonly Color4 TARGET = new Color4(255, 55, 95, 255);
 
     public static readonly Color4 OK = new Color4(48, 209, 88, 255);

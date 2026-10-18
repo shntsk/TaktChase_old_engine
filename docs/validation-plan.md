@@ -1,89 +1,95 @@
-# Plano de validação manual (hardware real)
+# Manual validation plan (real hardware)
 
-Referência: Intel Core i3-1005G1 · Intel UHD Graphics G1 (integrada) · 20 GB RAM · Arch Linux x86_64 e Windows x64.
+Reference: Intel Core i3-1005G1 · Intel UHD Graphics G1 (integrated) · 20 GB RAM · Arch Linux x86_64 and Windows x64.
 
-## O que o CI cobre e o que não cobre
+## What CI covers and what it does not
 
-| Item | CI (GitHub Actions) | Notebook real |
+| Item | CI (GitHub Actions) | Real laptop |
 |---|---|---|
-| Restore e build (Windows x64 e container Arch) | Sim | — |
-| Presença dos assemblies dos dois backends no build | Sim | — |
-| Testes NUnit headless (visuais e unitários) | Sim | — |
-| OpenGL em GPU física | **Não** | **Sim** |
-| Vulkan em GPU física | **Não** | **Sim** |
-| Fallback Vulkan → OpenGL | **Não** | **Sim** |
-| FPS, frametime, memória, estabilidade | **Não** | **Sim** |
+| Restore and build (Windows x64 and Arch container) | Yes | — |
+| Presence of both backends' assemblies in the build | Yes | — |
+| Headless NUnit tests (visual and unit) | Yes | — |
+| OpenGL on a physical GPU | **No** | **Yes** |
+| Vulkan on a physical GPU | **No** | **Yes** |
+| Vulkan → OpenGL fallback | **No** | **Yes** |
+| FPS, frame time, memory, stability | **No** | **Yes** |
 
-Em todos os cenários, anote: versão do TaktChase, `diagnostics.txt` e o log do framework.
-Local dos dados: Linux `~/.local/share/TaktChase`, Windows `%APPDATA%\TaktChase`
-(confira o caminho real no log do framework). Log de falha de inicialização:
+In every scenario, record: TaktChase version, `diagnostics.txt`, and the framework log.
+Data location: Linux `~/.local/share/TaktChase`, Windows `%APPDATA%\TaktChase`
+(check the real path in the framework log). Startup failure log:
 `<LocalApplicationData>/TaktChase/logs/startup-failure.log`.
 
-## Pré-requisitos
+The F3 panel cannot show the graphics surface or the renderer's VSync state: the framework's public API does not expose them, and the
+panel reports them as "Unavailable". Confirm the real backend from the framework log lines in the panel and, for Vulkan, from `vulkaninfo`
+(Linux) or the driver tools (Windows).
 
-**Arch:** `dotnet-sdk-10.0`, `mesa`, `vulkan-intel` (puxa `vulkan-icd-loader`), opcional `vulkan-tools`.
-**Windows:** .NET 10 SDK em uma versão de Windows suportada pelo .NET 10 (ver README: Windows 11, ou Windows 10 apenas Enterprise/IoT/LTSC 1607, 1809 e 21H2) e o driver gráfico Intel instalado pelo fabricante.
+## Prerequisites
 
-Compile na máquina: `dotnet build -c Release`.
+**Arch:** `dotnet-sdk-10.0`, `mesa`, `vulkan-intel` (pulls in `vulkan-icd-loader`), optional `vulkan-tools`.
+**Windows:** .NET 10 SDK on a Windows version supported by .NET 10 (see README: Windows 11, or Windows 10 only Enterprise/IoT/LTSC 1607, 1809, and 21H2) and the Intel graphics driver installed from the vendor.
 
-## Cenários
+Build on the machine: `dotnet build -c Release`.
+
+## Scenarios
 
 ### 1. Arch + OpenGL (Intel UHD G1)
 1. `dotnet run --project TaktChase.Desktop -c Release -- --renderer=opengl --show-fps`
-2. F3: confirmar "Superfície gráfica da janela: OpenGL" e tipo `GLRenderer`; sem alertas de divergência.
-3. Confirmar no log do framework as linhas de versão/renderer/vendor do OpenGL (esperado: driver Mesa/Intel).
+2. F3: confirm "Renderer type: GLRenderer" and "Request check: Consistent with the request"; no mismatch alerts.
+3. In the framework log, confirm the OpenGL version/renderer/vendor lines (expected: Mesa/Intel driver).
 
 ### 2. Arch + Vulkan
-1. `vulkaninfo --summary` (ver se a UHD G1 aparece).
+1. `vulkaninfo --summary` (check that the UHD G1 appears).
 2. `dotnet run --project TaktChase.Desktop -c Release -- --renderer=vulkan --show-fps`
-3. F3: "Superfície gráfica da janela: Vulkan", tipo `VeldridRenderer`, pré-verificação Vulkan com ≥ 1 dispositivo.
+3. F3: "Renderer type: VeldridRenderer", "Request check: Partially verified" (the surface itself is not exposed), and a Vulkan pre-check with ≥ 1 device.
+   Confirm Vulkan from the framework log lines and `vulkaninfo`, since the panel cannot.
 
 ### 3. Windows + OpenGL
-`TaktChase.Desktop.exe --renderer=opengl --show-fps` → F3 deve mostrar OpenGL / `GLRenderer`.
+`TaktChase.Desktop.exe --renderer=opengl --show-fps` → F3 must show "Renderer type: GLRenderer" and "Request check: Consistent".
 
 ### 4. Windows + Vulkan
-`TaktChase.Desktop.exe --renderer=vulkan --show-fps` → F3 deve mostrar Vulkan / `VeldridRenderer`.
-Se falhar, siga o cenário 5.
+`TaktChase.Desktop.exe --renderer=vulkan --show-fps` → F3 must show "Renderer type: VeldridRenderer" and "Request check: Partially verified".
+If it fails, follow scenario 5.
 
-### 5. Falha de Vulkan e fallback
-Provoque uma falha controlada sem alterar drivers, por exemplo:
-- Linux: `VK_DRIVER_FILES=/inexistente dotnet run --project TaktChase.Desktop -- --renderer=vulkan`
-  (variável do loader Vulkan; confirme na documentação do loader da sua versão).
-- Alternativa: máquina sem driver Vulkan.
+### 5. Vulkan failure and fallback
+Provoke a controlled failure without changing drivers, for example:
+- Linux: `VK_DRIVER_FILES=/nonexistent dotnet run --project TaktChase.Desktop -- --renderer=vulkan`
+  (a Vulkan loader variable; confirm in the loader documentation for your version).
+- Alternative: a machine without a Vulkan driver.
 
-Esperado: diagnóstico no stderr/log (e caixa de diálogo no Windows se não houver fallback); o jogo reinicia
-com OpenGL **uma única vez** (confirme no gerenciador de tarefas/`ps` que não há reinícios em sequência); F3 mostra
-"Fallback: sim", o motivo e o indicador âmbar no chip do backend. O log da falha original fica em
-`startup-failure.log`. Repita com
-`--no-fallback`: deve exibir o diagnóstico e encerrar com código 2, sem reiniciar.
-Verifique também que, nesse caso, o backend informado é o **efetivo** (OpenGL), não o pedido.
+Expected: a diagnosis on stderr/in the log (and a dialog box on Windows if there is no fallback); the game restarts
+with OpenGL **exactly once** (confirm in the task manager/`ps` that there are no consecutive restarts); F3 shows
+"Fallback: Yes", the fallback reason, and the amber indicator on the backend chip. The original failure's log is in
+`startup-failure.log`. Repeat with
+`--no-fallback`: it must show the diagnosis and exit with code 2, without restarting.
+Also verify that, in this case, the reported backend is the **active** one (OpenGL), not the requested one.
 
-### 5b. Caminhos de falha adicionais
-1. **OpenGL com falha forçada** (se conseguir provocá-la sem alterar drivers): `--renderer=opengl` deve mostrar o
-   diagnóstico e encerrar com código 2, sem reinício.
-2. **`auto` sem nenhum renderer utilizável** (por exemplo, sem driver gráfico): o framework registra "No usable
-   renderer was found!" e `GameHost.Run` retorna sem exceção; o TaktChase deve mostrar o diagnóstico e encerrar com
-   código 2 (e não sair em silêncio com código 0).
-3. **Pré-verificação + framework no mesmo processo:** com `--renderer=vulkan` bem-sucedido, confirme que a janela
-   abre e que não há travamento/crash após a pré-verificação (ela carrega e libera o loader Vulkan antes do framework).
-4. Conferir que `startup-failure-fallback.log` só aparece quando o próprio fallback falha.
+### 5b. Additional failure paths
+1. **OpenGL with a forced failure** (if you can provoke one without changing drivers): `--renderer=opengl` must show the
+   diagnosis and exit with code 2, without a restart.
+2. **`auto` with no usable renderer** (for example, no graphics driver): the framework logs "No usable
+   renderer was found!" and `GameHost.Run` returns without an exception; TaktChase must show the diagnosis and exit with
+   code 2 (and not exit silently with code 0).
+3. **Pre-check + framework in the same process:** with a successful `--renderer=vulkan`, confirm that the window
+   opens and that there is no hang/crash after the pre-check (it loads and releases the Vulkan loader before the framework).
+4. Confirm that `startup-failure-fallback.log` only appears when the fallback itself fails.
 
-### 6. Desempenho e estabilidade
-Para cada backend que funcionar (opengl, vulkan, e `auto`):
-1. `--show-fps`; anote FPS e frametime médios em 1920×1080 e em janela menor; redimensione a janela.
-2. Ctrl+F11 (estatísticas do framework) para ver tempos por thread; Ctrl+F7 alterna o limitador de quadros.
-3. Memória: F3 → working set e heap GC no início, após 10 min e após 60 min; contagens de coleta gen2 não devem crescer continuamente.
-4. Deixe aberto ≥ 60 min; registre travamentos, artefatos visuais, quedas de FPS e vazamento de memória.
-5. Compare OpenGL × Vulkan (e Direct3D 11 no `auto` do Windows) com as mesmas condições.
+### 6. Performance and stability
+For each backend that works (opengl, vulkan, and `auto`):
+1. `--show-fps`; record average FPS and frame time at 1920×1080 and in a smaller window; resize the window.
+2. Ctrl+F11 (framework statistics) to see per-thread times; Ctrl+F7 toggles the frame limiter.
+3. Memory: F3 → working set and GC heap at the start, after 10 min, and after 60 min; gen2 collection counts must not grow continuously.
+4. Leave it open for ≥ 60 min; record hangs, visual artifacts, FPS drops, and memory leaks.
+5. Compare OpenGL vs. Vulkan (and Direct3D 11 in Windows `auto`) under the same conditions.
 
-## Registro de resultados (copiar para cada teste)
+## Results log (copy for each test)
 
 ```
-Data / SO / driver:
-Cenário:
-Backend efetivo (F3):
-FPS / frametime:
-Memória inicial / final:
-Estabilidade:
-Observações:
+Date / OS / driver:
+Scenario:
+Active renderer (F3: Active renderer, Renderer type, Request check):
+Backend confirmed by (framework log / vulkaninfo / other):
+FPS / frame time:
+Initial / final memory:
+Stability:
+Notes:
 ```

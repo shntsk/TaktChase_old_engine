@@ -4,33 +4,33 @@ using System.Collections.Generic;
 namespace TaktChase.Game.Startup;
 
 /// <summary>
-/// Opções de linha de comando do TaktChase. Não depende do framework, para poder ser
-/// interpretada ANTES de qualquer inicialização gráfica e testada sem GPU.
+/// TaktChase command-line options. It does not depend on the framework, so it can be
+/// parsed BEFORE any graphics initialization and tested without a GPU.
 /// </summary>
 public sealed class LaunchOptions
 {
-    /// <summary>Definida pelo processo que reinicia o jogo após falha do Vulkan.</summary>
+    /// <summary>Set by the process that restarts the game after a Vulkan failure.</summary>
     public const string FALLBACK_FROM_ENV = "TAKTCHASE_FALLBACK_FROM";
 
-    /// <summary>Motivo resumido da falha que originou o fallback (texto livre).</summary>
+    /// <summary>Short reason for the failure that triggered the fallback (free text).</summary>
     public const string FALLBACK_REASON_ENV = "TAKTCHASE_FALLBACK_REASON";
 
     public static LaunchOptions Default => new LaunchOptions(RendererRequest.Auto, false, false, null, null, Array.Empty<string>());
 
     public RendererRequest Renderer { get; }
 
-    /// <summary>Mostra o indicador de FPS/frametime já na abertura (<c>--show-fps</c>).</summary>
+    /// <summary>Shows the FPS/frame-time indicator at startup (<c>--show-fps</c>).</summary>
     public bool ShowFps { get; }
 
-    /// <summary>Desativa o reinício automático com OpenGL quando o Vulkan falha (<c>--no-fallback</c>).</summary>
+    /// <summary>Disables the automatic OpenGL restart when Vulkan fails (<c>--no-fallback</c>).</summary>
     public bool NoFallback { get; }
 
-    /// <summary>Backend que falhou, quando esta execução é um fallback; caso contrário, nulo.</summary>
+    /// <summary>The backend that failed when this run is a fallback; otherwise null.</summary>
     public string? FallbackFrom { get; }
 
     public string? FallbackReason { get; }
 
-    /// <summary>Problemas na linha de comando. Nunca são ignorados em silêncio: vão para o log e para o painel.</summary>
+    /// <summary>Command-line problems. They are never silently ignored: they go to the log and the diagnostics panel.</summary>
     public IReadOnlyList<string> Warnings { get; }
 
     public bool IsFallbackRun => FallbackFrom != null;
@@ -67,10 +67,10 @@ public sealed class LaunchOptions
                 if (i + 1 < args.Count)
                     renderer = parseRenderer(args[++i], warnings);
                 else
-                    warnings.Add("--renderer sem valor; usando auto.");
+                    warnings.Add("--renderer has no value; using auto.");
             }
             else
-                warnings.Add($"Argumento desconhecido ignorado: {arg}");
+                warnings.Add($"Unknown argument ignored: {arg}");
         }
 
         string? fallbackFrom = emptyToNull(getEnvironmentVariable(FALLBACK_FROM_ENV));
@@ -95,7 +95,7 @@ public sealed class LaunchOptions
                 return RendererRequest.Vulkan;
 
             default:
-                warnings.Add($"Valor inválido para --renderer: '{value}'. Valores aceitos: auto, opengl, vulkan. Usando auto.");
+                warnings.Add($"Invalid value for --renderer: '{value}'. Accepted values: auto, opengl, vulkan. Using auto.");
                 return RendererRequest.Auto;
         }
     }

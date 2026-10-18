@@ -5,19 +5,19 @@ using System.Runtime.InteropServices;
 namespace TaktChase.Game.Startup;
 
 /// <summary>
-/// Acesso mínimo ao loader Vulkan, abstraído para permitir testes sem driver.
+/// Minimal access to the Vulkan loader, abstracted so it can be tested without a driver.
 /// </summary>
 public interface IVulkanApi : IDisposable
 {
-    /// <summary>Nomes de biblioteca tentados, para constar no diagnóstico.</summary>
+    /// <summary>Library names that were tried, so they can be listed in the diagnostics.</summary>
     IReadOnlyList<string> CandidateLibraryNames { get; }
 
     bool TryLoad(out string libraryName);
 
-    /// <summary>Falso se o loader não exporta <c>vkEnumerateInstanceVersion</c> (loader Vulkan 1.0).</summary>
+    /// <summary>False if the loader does not export <c>vkEnumerateInstanceVersion</c> (Vulkan 1.0 loader).</summary>
     bool TryGetInstanceVersion(out uint version);
 
-    /// <summary>Chama <c>vkCreateInstance</c> sem camadas nem extensões. Retorna o VkResult.</summary>
+    /// <summary>Calls <c>vkCreateInstance</c> with no layers or extensions. Returns the VkResult.</summary>
     int CreateInstance(out IntPtr instance);
 
     int EnumeratePhysicalDeviceCount(IntPtr instance, out uint count);
@@ -26,8 +26,8 @@ public interface IVulkanApi : IDisposable
 }
 
 /// <summary>
-/// Resultado da pré-verificação. É DIAGNÓSTICO: não substitui a inicialização real do framework,
-/// que é quem valida superfície, filas e recursos necessários.
+/// Result of the pre-check. It is DIAGNOSTIC ONLY: it does not replace the framework's real initialization,
+/// which is what validates the surface, queues, and required features.
 /// </summary>
 public sealed class VulkanProbeResult
 {
@@ -40,7 +40,7 @@ public sealed class VulkanProbeResult
     public uint? PhysicalDeviceCount { get; init; }
     public string? Error { get; init; }
 
-    /// <summary>Loader presente, instância criada e ao menos um dispositivo físico enumerado.</summary>
+    /// <summary>Loader present, instance created, and at least one physical device enumerated.</summary>
     public bool LooksUsable => LoaderFound && CreateInstanceResult == 0 && EnumerateResult is null or 0 && PhysicalDeviceCount > 0;
 
     public IReadOnlyList<string> ToLines()
@@ -49,35 +49,35 @@ public sealed class VulkanProbeResult
 
         if (!LoaderFound)
         {
-            lines.Add($"Loader Vulkan NÃO encontrado (tentado: {string.Join(", ", TriedLibraries)}).");
+            lines.Add($"Vulkan loader NOT found (tried: {string.Join(", ", TriedLibraries)}).");
 
             if (Error != null)
-                lines.Add($"Detalhe: {Error}");
+                lines.Add($"Detail: {Error}");
 
             return lines;
         }
 
-        lines.Add($"Loader Vulkan: {LoaderName}" + (InstanceVersion != null ? $" (versão de instância {InstanceVersion})" : " (vkEnumerateInstanceVersion indisponível)"));
+        lines.Add($"Vulkan loader: {LoaderName}" + (InstanceVersion != null ? $" (instance version {InstanceVersion})" : " (vkEnumerateInstanceVersion unavailable)"));
 
         if (CreateInstanceResult is int create)
         {
             lines.Add(create == 0
                 ? "vkCreateInstance: VK_SUCCESS"
-                : $"vkCreateInstance falhou: {VulkanProbe.DescribeResult(create)}"
-                  + (create == -9 ? " — nenhum driver Vulkan compatível foi encontrado pelo loader." : string.Empty));
+                : $"vkCreateInstance failed: {VulkanProbe.DescribeResult(create)}"
+                  + (create == -9 ? " — the loader found no compatible Vulkan driver." : string.Empty));
         }
 
         if (PhysicalDeviceCount is uint count)
-            lines.Add($"Dispositivos físicos Vulkan enumerados: {count}" + (count == 0 ? " — nenhum driver/GPU utilizável." : string.Empty));
+            lines.Add($"Vulkan physical devices enumerated: {count}" + (count == 0 ? " — no usable driver/GPU." : string.Empty));
         else if (EnumerateResult is int enumerate)
-            lines.Add($"vkEnumeratePhysicalDevices falhou: {VulkanProbe.DescribeResult(enumerate)}");
+            lines.Add($"vkEnumeratePhysicalDevices failed: {VulkanProbe.DescribeResult(enumerate)}");
 
         if (Error != null)
-            lines.Add($"Detalhe: {Error}");
+            lines.Add($"Detail: {Error}");
 
         lines.Add(LooksUsable
-            ? "Pré-verificação concluída. Isto NÃO garante que o framework consiga criar superfície e dispositivo; a inicialização real é a prova."
-            : "Pré-verificação indica problema no ambiente Vulkan.");
+            ? "Pre-check completed. This does NOT guarantee that the framework can create a surface and a device; the real initialization is the proof."
+            : "The pre-check indicates a problem in the Vulkan environment.");
 
         return lines;
     }
@@ -139,14 +139,14 @@ public static class VulkanProbe
         }
     }
 
-    /// <summary>Executa a pré-verificação com o loader real do sistema.</summary>
+    /// <summary>Runs the pre-check against the system's real loader.</summary>
     public static VulkanProbeResult RunNative()
     {
         using var api = new NativeVulkanApi();
         return Run(api);
     }
 
-    /// <summary>Decodifica um número de versão Vulkan empacotado (major.minor.patch).</summary>
+    /// <summary>Decodes a packed Vulkan version number (major.minor.patch).</summary>
     public static string FormatVersion(uint packed)
     {
         uint major = packed >> 22;
@@ -176,8 +176,8 @@ public static class VulkanProbe
 }
 
 /// <summary>
-/// Implementação real, via o loader do sistema (libvulkan.so.1 / vulkan-1.dll).
-/// Apenas consulta e cria/destrói uma instância; não é um renderer.
+/// Real implementation, through the system loader (libvulkan.so.1 / vulkan-1.dll).
+/// It only queries and creates/destroys an instance; it is not a renderer.
 /// </summary>
 internal sealed class NativeVulkanApi : IVulkanApi
 {

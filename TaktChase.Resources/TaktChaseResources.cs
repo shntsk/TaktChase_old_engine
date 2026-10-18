@@ -3,8 +3,8 @@ using System.Reflection;
 namespace TaktChase.Resources;
 
 /// <summary>
-/// Ponto de acesso aos recursos embutidos (texturas) do TaktChase.
-/// Segue o mesmo padrão do template oficial osu-framework-game.
+/// Entry point for TaktChase's embedded resources (textures).
+/// Follows the same pattern as the official osu-framework-game template.
 /// </summary>
 public static class TaktChaseResources
 {

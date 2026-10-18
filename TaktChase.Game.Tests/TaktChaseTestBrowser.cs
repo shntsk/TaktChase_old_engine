@@ -10,7 +10,7 @@ public partial class TaktChaseTestBrowser : TaktChaseGameBase
     {
         base.LoadComplete();
 
-        // O test browser descobre as cenas de teste a partir deste namespace.
+        // The test browser discovers the test scenes from this namespace.
         AddRange(new Drawable[]
         {
             new TestBrowser("TaktChase"),

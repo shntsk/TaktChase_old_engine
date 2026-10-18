@@ -42,7 +42,7 @@ public partial class TaktChaseGame : TaktChaseGameBase
     {
         gameHost = host;
 
-        // O backend efetivo vem do host já inicializado, nunca do argumento recebido.
+        // The active backend comes from the already initialized host, never from the received argument.
         report = GraphicsDiagnostics.Capture(host, options, StartupState.Probe, StartupState.Notes);
 
         Children = new Drawable[]
@@ -74,13 +74,13 @@ public partial class TaktChaseGame : TaktChaseGameBase
 
         screenStack.Push(new HomeScreen(report));
 
-        // A partir daqui, falhas deixam de ser "falha de inicialização de renderer".
+        // From here on, failures are no longer treated as a renderer startup failure.
         StartupState.MarkCompleted();
     }
 
     protected override bool OnKeyDown(KeyDownEvent e)
     {
-        // F2 e F3 sem modificadores não conflitam com os atalhos do framework (todos usam Ctrl/Alt).
+        // Unmodified F2 and F3 do not conflict with the framework's shortcuts (they all use Ctrl/Alt).
         if (!e.Repeat && !e.ControlPressed && !e.AltPressed && !e.ShiftPressed)
         {
             switch (e.Key)
@@ -100,13 +100,13 @@ public partial class TaktChaseGame : TaktChaseGameBase
 
     private void logReport()
     {
-        Logger.Log($"[TaktChase] Renderer solicitado: {options.Renderer}; backend efetivo: {report.BackendSummary}", LoggingTarget.Runtime, LogLevel.Important);
+        Logger.Log($"[TaktChase] Requested renderer: {options.Renderer}; graphics backend: {report.BackendSummary}", LoggingTarget.Runtime, LogLevel.Important);
 
         foreach (string alert in report.Alerts)
-            Logger.Log($"[TaktChase] Aviso: {alert}", LoggingTarget.Runtime, LogLevel.Important);
+            Logger.Log($"[TaktChase] Warning: {alert}", LoggingTarget.Runtime, LogLevel.Important);
 
         if (options.IsFallbackRun)
-            Logger.Log($"[TaktChase] Fallback de {options.FallbackFrom}. Motivo: {options.FallbackReason ?? "n/d"}", LoggingTarget.Runtime, LogLevel.Important);
+            Logger.Log($"[TaktChase] Fallback from {options.FallbackFrom}. Fallback reason: {options.FallbackReason ?? GraphicsReport.NOT_AVAILABLE}", LoggingTarget.Runtime, LogLevel.Important);
     }
 
     private void writeReportFile()
@@ -118,7 +118,7 @@ public partial class TaktChaseGame : TaktChaseGameBase
         }
         catch (Exception e)
         {
-            Logger.Log($"[TaktChase] Não foi possível gravar diagnostics.txt: {e.Message}", LoggingTarget.Runtime, LogLevel.Important);
+            Logger.Log($"[TaktChase] Could not write diagnostics.txt: {e.Message}", LoggingTarget.Runtime, LogLevel.Important);
         }
     }
 }

@@ -9,12 +9,12 @@ namespace TaktChase.Game;
 
 public abstract partial class TaktChaseGameBase : osu.Framework.Game
 {
-    // Tudo aqui é compartilhado entre o jogo e o test browser (mesmo padrão do template oficial).
+    // Everything here is shared between the game and the test browser (same pattern as the official template).
     protected override Container<Drawable> Content { get; }
 
     protected TaktChaseGameBase()
     {
-        // Referência de 1920x1080; o conteúdo escala proporcionalmente para janelas menores/maiores.
+        // 1920x1080 reference; content scales proportionally for smaller/larger windows.
         base.Content.Add(Content = new DrawSizePreservingFillContainer
         {
             TargetDrawSize = new Vector2(1920, 1080),

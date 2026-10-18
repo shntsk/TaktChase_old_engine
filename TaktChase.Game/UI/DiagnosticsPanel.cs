@@ -11,8 +11,8 @@ using TaktChase.Game.Graphics;
 namespace TaktChase.Game.UI;
 
 /// <summary>
-/// Painel de diagnóstico gráfico (tecla F3). Mostra o <see cref="GraphicsReport"/> e a memória do processo,
-/// atualizada só enquanto o painel está visível.
+/// Graphics diagnostics panel (F3 key). Shows the <see cref="GraphicsReport"/> and the process memory,
+/// which is refreshed only while the panel is visible.
 /// </summary>
 public partial class DiagnosticsPanel : Container
 {
@@ -58,7 +58,7 @@ public partial class DiagnosticsPanel : Container
                 {
                     new SpriteText
                     {
-                        Text = "Diagnóstico gráfico",
+                        Text = "Graphics diagnostics",
                         Font = FontUsage.Default.With(size: 32, weight: "Bold"),
                         Colour = TaktPalette.TEXT_PRIMARY,
                     },
@@ -76,7 +76,7 @@ public partial class DiagnosticsPanel : Container
                     {
                         Font = FontUsage.Default.With(size: 20),
                         Colour = TaktPalette.TEXT_SECONDARY,
-                        Text = "Memória: --",
+                        Text = "Memory: --",
                     },
                 },
             },
@@ -109,7 +109,7 @@ public partial class DiagnosticsPanel : Container
         using (var process = Process.GetCurrentProcess())
             workingSet = process.WorkingSet64;
 
-        memoryText.Text = $"Memória: working set {workingSet / 1048576.0:0.0} MiB · heap GC {GC.GetTotalMemory(false) / 1048576.0:0.0} MiB · "
-                          + $"coletas gen0/1/2: {GC.CollectionCount(0)}/{GC.CollectionCount(1)}/{GC.CollectionCount(2)}";
+        memoryText.Text = $"Memory: working set {workingSet / 1048576.0:0.0} MiB · GC heap {GC.GetTotalMemory(false) / 1048576.0:0.0} MiB · "
+                          + $"GC collections gen0/1/2: {GC.CollectionCount(0)}/{GC.CollectionCount(1)}/{GC.CollectionCount(2)}";
     }
 }

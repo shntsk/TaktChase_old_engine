@@ -5,7 +5,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <Deterministic>true</Deterministic>
     <InvariantGlobalization>false</InvariantGlobalization>
-    <!-- Mesmo manifesto do template oficial (DPI, compatibilidade com Windows 10+); só tem efeito nos projetos executáveis. -->
+    <!-- Same manifest as the official template (DPI awareness, Windows 10+ compatibility); it only takes effect in executable projects. -->
     <ApplicationManifest>$(MSBuildThisFileDirectory)app.manifest</ApplicationManifest>
   </PropertyGroup>
 </Project>

@@ -9,10 +9,10 @@ using osuTK.Graphics;
 namespace TaktChase.Game.UI;
 
 /// <summary>
-/// Indicador discreto de FPS e frametime, desligado por padrão.
-/// Lê o relógio do thread de atualização do framework (Clock.FramesPerSecond / ElapsedFrameTime)
-/// e só reescreve o texto 4 vezes por segundo, para não gerar alocações a cada frame.
-/// Para estatísticas por thread (Update/Draw/Input/Audio), use o overlay do próprio framework (Ctrl+F11).
+/// Discreet FPS and frame-time indicator, off by default.
+/// Reads the clock of the framework's update thread (Clock.FramesPerSecond / ElapsedFrameTime)
+/// and only rewrites its text four times per second, to avoid allocations on every frame.
+/// For per-thread statistics (Update/Draw/Input/Audio), use the framework's own overlay (Ctrl+F11).
 /// </summary>
 public partial class FpsCounter : Container
 {

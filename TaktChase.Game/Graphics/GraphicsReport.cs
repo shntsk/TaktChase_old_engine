@@ -5,35 +5,35 @@ using System.Text;
 namespace TaktChase.Game.Graphics;
 
 /// <summary>
-/// Relatório de diagnóstico gráfico. Só contém valores lidos do host/renderer do framework,
-/// do ambiente de execução ou do log do framework. Valores indisponíveis aparecem como "n/d".
+/// Graphics diagnostics report. It only contains values read from the framework host/renderer,
+/// the runtime environment, or the framework log. Anything the public API does not expose is reported as "Unavailable".
 /// </summary>
 public sealed class GraphicsReport
 {
-    public const string NOT_AVAILABLE = "n/d";
+    public const string NOT_AVAILABLE = "Unavailable";
 
     public static GraphicsReport Unavailable { get; } = new GraphicsReport(
-        new[] { new KeyValuePair<string, string>("Backend", "indisponível (sem host gráfico)") },
+        new[] { new KeyValuePair<string, string>("Graphics backend", "Unavailable (no graphics host)") },
         Array.Empty<string>(),
         Array.Empty<string>(),
         Array.Empty<string>(),
-        "indisponível",
+        NOT_AVAILABLE,
         false);
 
     public IReadOnlyList<KeyValuePair<string, string>> Entries { get; }
 
-    /// <summary>Avisos importantes: divergência pedido x ativo, fallback, argumentos inválidos.</summary>
+    /// <summary>Important warnings: requested vs. active renderer mismatch, fallback, invalid arguments.</summary>
     public IReadOnlyList<string> Alerts { get; }
 
-    /// <summary>Linhas do log do framework com informações gráficas (versão GL, renderer, vendor etc.).</summary>
+    /// <summary>Framework log lines with graphics information (GL version, renderer, vendor, and so on).</summary>
     public IReadOnlyList<string> FrameworkLogLines { get; }
 
     public IReadOnlyList<string> StartupErrors { get; }
 
-    /// <summary>Texto curto do backend ATIVO, para a interface (ex.: "OpenGL · GLRenderer").</summary>
+    /// <summary>Short text for the ACTIVE graphics backend, shown in the UI (for example "GLRenderer").</summary>
     public string BackendSummary { get; }
 
-    /// <summary>Verdadeiro se há algo que o usuário deve notar (fallback, divergência, erro).</summary>
+    /// <summary>True if there is something the user should notice (fallback, mismatch, error).</summary>
     public bool NeedsAttention { get; }
 
     public GraphicsReport(
@@ -52,7 +52,7 @@ public sealed class GraphicsReport
         NeedsAttention = needsAttention;
     }
 
-    /// <param name="maxLogLines">Limite de linhas de log incluídas; use um valor menor na interface e o completo no arquivo.</param>
+    /// <param name="maxLogLines">Maximum number of log lines to include; use a smaller value in the UI and the full set in the file.</param>
     public string ToText(int maxLogLines = int.MaxValue)
     {
         var text = new StringBuilder();
@@ -69,7 +69,7 @@ public sealed class GraphicsReport
         if (FrameworkLogLines.Count > 0)
         {
             text.AppendLine();
-            text.AppendLine("Log do framework (linhas gráficas):");
+            text.AppendLine("Framework log (graphics lines):");
 
             int shown = Math.Min(FrameworkLogLines.Count, maxLogLines);
 
@@ -77,13 +77,13 @@ public sealed class GraphicsReport
                 text.AppendLine("  " + FrameworkLogLines[i]);
 
             if (shown < FrameworkLogLines.Count)
-                text.AppendLine($"  … mais {FrameworkLogLines.Count - shown} linha(s) em diagnostics.txt");
+                text.AppendLine($"  … {FrameworkLogLines.Count - shown} more line(s) in diagnostics.txt");
         }
 
         if (StartupErrors.Count > 0)
         {
             text.AppendLine();
-            text.AppendLine("Erros registrados na inicialização:");
+            text.AppendLine("Errors logged during startup:");
 
             foreach (string error in StartupErrors)
                 text.AppendLine("  " + error);

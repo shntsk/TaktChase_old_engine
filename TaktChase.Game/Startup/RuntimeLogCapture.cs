@@ -5,9 +5,9 @@ using osu.Framework.Logging;
 namespace TaktChase.Game.Startup;
 
 /// <summary>
-/// Guarda, em memória e com limite fixo, linhas do log do framework relevantes para o diagnóstico
-/// gráfico. O framework registra versão/renderer/vendor do OpenGL apenas no log (não há propriedade
-/// pública), então esta é a forma suportada de mostrá-las sem inventar dados.
+/// Keeps, in memory and with a fixed limit, the framework log lines that are relevant to the graphics
+/// diagnostics. The framework records the OpenGL version/renderer/vendor only in the log (there is no
+/// public property), so this is the supported way to show them without inventing data.
 /// </summary>
 public static class RuntimeLogCapture
 {
@@ -57,7 +57,7 @@ public static class RuntimeLogCapture
         if (string.IsNullOrEmpty(message))
             return;
 
-        // Evita duplicar as próprias linhas do TaktChase.
+        // Avoid duplicating TaktChase's own lines.
         if (message.StartsWith("[TaktChase]", System.StringComparison.Ordinal))
             return;
 

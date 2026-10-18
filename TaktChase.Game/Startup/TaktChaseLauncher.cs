@@ -9,14 +9,14 @@ using osu.Framework.Platform;
 namespace TaktChase.Game.Startup;
 
 /// <summary>
-/// Orquestra a seleção de backend ANTES de criar o host gráfico, executa o jogo e, se o Vulkan
-/// explicitamente pedido falhar durante a inicialização, reinicia o processo com OpenGL.
+/// Orchestrates backend selection BEFORE the graphics host is created, runs the game and, if an
+/// explicitly requested Vulkan renderer fails during initialization, restarts the process with OpenGL.
 /// </summary>
 /// <remarks>
-/// Por que o fallback é por reinício de processo: com as variáveis de ambiente oficiais o framework
-/// falha de forma definitiva (sem fallback interno) e as variáveis são lidas uma única vez por
-/// processo (construtor estático de FrameworkEnvironment). O modo "auto" usa o fallback do próprio
-/// framework e não passa por aqui. Veja README, seção "Fallback e limitações".
+/// Why the fallback is a process restart: with the official environment variables the framework
+/// fails permanently (no internal fallback), and the variables are read only once per
+/// process (static constructor of FrameworkEnvironment). The "auto" mode uses the framework's own
+/// fallback and does not go through here. See the README section "Fallback and limitations".
 /// </remarks>
 public static class TaktChaseLauncher
 {
@@ -27,12 +27,12 @@ public static class TaktChaseLauncher
         var options = LaunchOptions.Parse(args, Environment.GetEnvironmentVariable);
         var notes = new List<string>();
 
-        // 1) Seleção de backend: variáveis oficiais do framework, definidas antes de qualquer
-        //    chamada ao framework (elas são lidas no construtor estático de FrameworkEnvironment).
+        // 1) Backend selection: official framework variables, set before any call into the
+        //    framework (they are read in the static constructor of FrameworkEnvironment).
         if (options.Renderer == RendererRequest.Auto && RendererEnvironment.HasExternalOverride(Environment.GetEnvironmentVariable))
         {
-            notes.Add($"{RendererEnvironment.RENDERER_VARIABLE}/{RendererEnvironment.SURFACE_VARIABLE} já estavam definidas no ambiente; "
-                      + "o framework as usa sem fallback, mesmo com --renderer=auto.");
+            notes.Add($"{RendererEnvironment.RENDERER_VARIABLE}/{RendererEnvironment.SURFACE_VARIABLE} were already set in the environment; "
+                      + "the framework uses them without fallback, even with --renderer=auto.");
         }
 
         foreach (var variable in RendererEnvironment.GetVariables(options.Renderer))
@@ -40,14 +40,14 @@ public static class TaktChaseLauncher
 
         RuntimeLogCapture.Attach();
 
-        // 2) Pré-verificação Vulkan (somente diagnóstico) quando o Vulkan foi pedido explicitamente.
+        // 2) Vulkan pre-check (diagnostics only) when Vulkan was explicitly requested.
         VulkanProbeResult? probe = options.Renderer == RendererRequest.Vulkan ? VulkanProbe.RunNative() : null;
 
         StartupState.Configure(options, probe, notes);
 
-        // 3) Host e jogo, sempre pelos mecanismos do framework.
-        //    O host é descartado (using) ANTES de qualquer tratamento de falha, para liberar a instância
-        //    única do jogo antes de um eventual reinício do processo.
+        // 3) Host and game, always through the framework's own mechanisms.
+        //    The host is disposed (using) BEFORE any failure handling, to release the single
+        //    game instance before a possible process restart.
         try
         {
             var hostOptions = new HostOptions { FriendlyGameName = GAME_NAME };
@@ -58,17 +58,17 @@ public static class TaktChaseLauncher
             {
                 host.Run(game);
 
-                // GameHost.Run NÃO lança exceção quando a seleção automática esgota todos os renderers:
-                // o framework registra "No usable renderer was found!" (LogLevel.Error), o host fica sem
-                // Window e sem Renderer e Run simplesmente retorna. Sem esta verificação o processo sairia
-                // com código 0 e sem nenhum diagnóstico.
+                // GameHost.Run does NOT throw when automatic selection exhausts every renderer:
+                // the framework logs "No usable renderer was found!" (LogLevel.Error), the host is left without
+                // a Window and a Renderer, and Run simply returns. Without this check the process would exit
+                // with code 0 and no diagnostics.
                 noUsableRenderer = !StartupState.Completed && host.Renderer == null;
             }
 
             if (noUsableRenderer)
             {
                 return handleStartupFailure(options, probe,
-                    new InvalidOperationException("O framework encerrou a inicialização sem um renderer utilizável (nenhuma janela/renderer foi criada)."));
+                    new InvalidOperationException("The framework ended initialization without a usable renderer (no window or renderer was created)."));
             }
 
             return 0;
@@ -92,8 +92,8 @@ public static class TaktChaseLauncher
             if (relaunchWithOpenGL(options, reason))
                 return 0;
 
-            diagnosis += Environment.NewLine + "Não foi possível reiniciar automaticamente com OpenGL.";
-            Console.Error.WriteLine("Não foi possível reiniciar automaticamente com OpenGL.");
+            diagnosis += Environment.NewLine + "Could not automatically restart with OpenGL.";
+            Console.Error.WriteLine("Could not automatically restart with OpenGL.");
         }
 
         showErrorDialog(logPath == null ? diagnosis : diagnosis + Environment.NewLine + "Log: " + logPath);
@@ -111,7 +111,7 @@ public static class TaktChaseLauncher
 
             var startInfo = new ProcessStartInfo(executable) { UseShellExecute = false };
 
-            // Executado via "dotnet TaktChase.Desktop.dll": o primeiro argumento é a própria DLL.
+            // Launched through "dotnet TaktChase.Desktop.dll": the first argument is the DLL itself.
             if (Path.GetFileNameWithoutExtension(executable).Equals("dotnet", StringComparison.OrdinalIgnoreCase))
             {
                 string[] commandLine = Environment.GetCommandLineArgs();
@@ -133,7 +133,7 @@ public static class TaktChaseLauncher
         }
         catch (Exception e)
         {
-            Console.Error.WriteLine($"Falha ao reiniciar com OpenGL: {e.GetType().Name}: {e.Message}");
+            Console.Error.WriteLine($"Failed to restart with OpenGL: {e.GetType().Name}: {e.Message}");
             return false;
         }
     }
@@ -145,7 +145,7 @@ public static class TaktChaseLauncher
             string directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), GAME_NAME, "logs");
             Directory.CreateDirectory(directory);
 
-            // Uma execução de fallback que também falha NÃO pode sobrescrever o log da falha original.
+            // A fallback run that also fails must NOT overwrite the log of the original failure.
             string path = Path.Combine(directory, options.IsFallbackRun ? "startup-failure-fallback.log" : "startup-failure.log");
             File.WriteAllText(path, $"{DateTime.Now:O}{Environment.NewLine}{diagnosis}{Environment.NewLine}{exception}{Environment.NewLine}");
             return path;
@@ -156,7 +156,7 @@ public static class TaktChaseLauncher
         }
     }
 
-    // Aplicativo WinExe não tem console no Windows: sem isto o erro seria invisível.
+    // A WinExe application has no console on Windows: without this the error would be invisible.
     private static void showErrorDialog(string message)
     {
         if (!OperatingSystem.IsWindows())
@@ -168,7 +168,7 @@ public static class TaktChaseLauncher
         }
         catch
         {
-            // Sem diálogo disponível; o diagnóstico já foi escrito no stderr e no arquivo de log.
+            // No dialog available; the diagnosis was already written to stderr and to the log file.
         }
     }
 

@@ -9,12 +9,12 @@ obj/
 TestResults/
 *.trx
 
-## Pacotes restaurados e binários
+## Restored packages and binaries
 packages/
 *.nupkg
 *.exe
 *.dll
 *.pdb
 
-## Dados locais de execução (logs, framework.ini, diagnostics.txt)
+## Local runtime data (logs, framework.ini, diagnostics.txt)
 /runtime/

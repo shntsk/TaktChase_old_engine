@@ -36,8 +36,8 @@ public class RendererEnvironmentTest
     [TestCase(RendererRequest.Vulkan)]
     public void TestSurfaceValueIsParsedByTheFrameworkEnum(RendererRequest request)
     {
-        // O framework lê OSU_GRAPHICS_SURFACE com Enum.TryParse<GraphicsSurfaceType>(ignoreCase: true) e ignora
-        // valores inválidos em silêncio; este teste garante que o valor que definimos é realmente aceito.
+        // The framework reads OSU_GRAPHICS_SURFACE with Enum.TryParse<GraphicsSurfaceType>(ignoreCase: true) and silently
+        // ignores invalid values; this test guarantees that the value we set is actually accepted.
         string value = RendererEnvironment.GetVariables(request)[RendererEnvironment.SURFACE_VARIABLE];
 
         Assert.That(Enum.TryParse<GraphicsSurfaceType>(value, true, out _), Is.True);

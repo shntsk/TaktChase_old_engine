@@ -86,7 +86,7 @@ public class LaunchOptionsTest
         string? environment(string name) => name switch
         {
             LaunchOptions.FALLBACK_FROM_ENV => "Vulkan",
-            LaunchOptions.FALLBACK_REASON_ENV => "motivo qualquer",
+            LaunchOptions.FALLBACK_REASON_ENV => "any reason",
             _ => null,
         };
 
@@ -94,7 +94,7 @@ public class LaunchOptionsTest
 
         Assert.That(options.IsFallbackRun, Is.True);
         Assert.That(options.FallbackFrom, Is.EqualTo("Vulkan"));
-        Assert.That(options.FallbackReason, Is.EqualTo("motivo qualquer"));
+        Assert.That(options.FallbackReason, Is.EqualTo("any reason"));
     }
 
     [Test]

@@ -13,8 +13,8 @@ using TaktChase.Game.UI;
 namespace TaktChase.Game.Screens;
 
 /// <summary>
-/// Tela inicial da fundação: identidade visual, pulso de ritmo e o backend ativo.
-/// Usa apenas drawables do framework (sem texturas além da marca) e transformações leves.
+/// Home screen of the foundation stage: visual identity, rhythm pulse, and the active graphics backend.
+/// Uses only framework drawables (no textures besides the logo mark) and lightweight transforms.
 /// </summary>
 public partial class HomeScreen : Screen
 {
@@ -101,7 +101,7 @@ public partial class HomeScreen : Screen
                     {
                         Anchor = Anchor.TopCentre,
                         Origin = Anchor.TopCentre,
-                        Text = "Precisão no tempo. Foco no alvo. Leitura de cada objeto.",
+                        Text = "Precision in time. Focus on the target. Read every object.",
                         Font = FontUsage.Default.With(size: 30),
                         Colour = TaktPalette.TEXT_SECONDARY,
                     },
@@ -109,7 +109,7 @@ public partial class HomeScreen : Screen
                     {
                         Anchor = Anchor.TopCentre,
                         Origin = Anchor.TopCentre,
-                        Text = "FUNDAÇÃO  ·  ETAPA 0",
+                        Text = "FOUNDATION  ·  STAGE 0",
                         Font = FontUsage.Default.With(size: 20, weight: "Bold"),
                         Colour = TaktPalette.CHASE,
                         Spacing = new Vector2(5, 0),
@@ -122,7 +122,7 @@ public partial class HomeScreen : Screen
                 Anchor = Anchor.BottomCentre,
                 Origin = Anchor.BottomCentre,
                 Margin = new MarginPadding { Bottom = 44 },
-                Text = "F2  FPS    ·    F3  diagnóstico gráfico    ·    Ctrl+F11  estatísticas do framework",
+                Text = "F2  FPS    ·    F3  graphics diagnostics    ·    Ctrl+F11  framework statistics",
                 Font = FontUsage.Default.With(size: 20),
                 Colour = TaktPalette.TEXT_SECONDARY,
             },
@@ -164,7 +164,7 @@ public partial class HomeScreen : Screen
                     {
                         Anchor = Anchor.CentreLeft,
                         Origin = Anchor.CentreLeft,
-                        Text = $"Backend ativo: {report.BackendSummary}",
+                        Text = $"Graphics backend: {report.BackendSummary}",
                         Font = FontUsage.Default.With(size: 24),
                         Colour = TaktPalette.TEXT_PRIMARY,
                     },
@@ -181,7 +181,7 @@ public partial class HomeScreen : Screen
         Scheduler.AddDelayed(pulse, beat_interval_ms, true);
     }
 
-    /// <summary>Um "compasso": o anel persegue o alvo e o alvo reage ao toque.</summary>
+    /// <summary>One "beat": the ring chases the target and the target reacts to the tap.</summary>
     private void pulse()
     {
         ring.FadeTo(0).ScaleTo(2.3f)
