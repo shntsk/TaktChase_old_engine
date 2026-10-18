@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <AssemblyName>TaktChase.Game</AssemblyName>
+    <RootNamespace>TaktChase.Game</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <!--
+      Um único pacote traz os dois caminhos de renderização (GLRenderer / OpenGL e
+      VeldridRenderer / Vulkan, Direct3D 11, Metal). Não existe opção de compilação
+      que ligue ou desligue um backend: ambos entram sempre no build.
+    -->
+    <PackageReference Include="ppy.osu.Framework" Version="2026.1008.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TaktChase.Resources\TaktChase.Resources.csproj" />
+  </ItemGroup>
+</Project>

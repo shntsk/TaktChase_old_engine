@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>TaktChase.Resources</AssemblyName>
+    <RootNamespace>TaktChase.Resources</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Textures\**\*.png" />
+  </ItemGroup>
+</Project>

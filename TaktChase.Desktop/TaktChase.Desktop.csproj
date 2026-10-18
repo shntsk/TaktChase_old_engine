@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <AssemblyName>TaktChase.Desktop</AssemblyName>
+    <RootNamespace>TaktChase.Desktop</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TaktChase.Game\TaktChase.Game.csproj" />
+  </ItemGroup>
+</Project>

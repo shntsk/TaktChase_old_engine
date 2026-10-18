@@ -1,0 +1,57 @@
+name: CI Windows x64
+
+# Valida restore, build e testes automatizados no Windows x64 (runner GitHub-hosted, Windows Server).
+# Não há GPU física neste runner: nenhum backend gráfico é executado em hardware real aqui.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: "1"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+
+jobs:
+  build-test:
+    name: Build e testes (Windows x64, sem GPU)
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Informações do SDK
+        run: dotnet --info
+
+      - name: Restore
+        run: dotnet restore TaktChase.sln
+
+      - name: Build (Release)
+        run: dotnet build TaktChase.sln -c Release --no-restore
+
+      - name: Verificar que os dois caminhos de renderização estão no build
+        shell: pwsh
+        run: |
+          # OpenGL (GLRenderer) e Veldrid (Vulkan/D3D11) vêm no mesmo pacote ppy.osu.Framework.
+          $out = "TaktChase.Desktop/bin/Release/net10.0"
+          if (-not (Test-Path "$out/osu.Framework.dll")) { throw "osu.Framework.dll ausente em $out" }
+          if (-not (Get-ChildItem $out -Filter "Veldrid*.dll")) { throw "Veldrid*.dll ausente em $out" }
+          Write-Host "osu.Framework.dll e Veldrid*.dll presentes."
+
+      - name: Testes
+        run: dotnet test TaktChase.sln -c Release --no-build --logger "console;verbosity=normal"
+
+      - name: Aviso sobre cobertura
+        shell: pwsh
+        run: Write-Host "CI validou compilação e testes headless. Não validou OpenGL/Vulkan em GPU física."

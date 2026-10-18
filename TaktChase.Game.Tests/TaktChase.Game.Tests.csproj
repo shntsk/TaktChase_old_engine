@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <AssemblyName>TaktChase.Game.Tests</AssemblyName>
+    <RootNamespace>TaktChase.Game.Tests</RootNamespace>
+    <!-- O projeto tem o próprio Program.Main (test browser visual), como no template oficial. -->
+    <GenerateProgramFile>false</GenerateProgramFile>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <!--
+      Versões idênticas às do template oficial ppy.osu.Framework.Templates 2026.1008.0
+      (osu.Framework.Templates/templates/template-empty/TemplateGame.Game.Tests.csproj).
+      O NUnit NÃO é referenciado aqui: o template também não o faz; ele chega transitivamente por
+      ppy.osu.Framework, cuja dependência publicada no NuGet é NUnit (>= 4.6.1).
+    -->
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
+    <PackageReference Include="NUnit3TestAdapter" Version="6.2.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TaktChase.Game\TaktChase.Game.csproj" />
+  </ItemGroup>
+</Project>

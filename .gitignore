@@ -1,0 +1,20 @@
+## .NET build output
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.idea/
+.vscode/
+TestResults/
+*.trx
+
+## Pacotes restaurados e binários
+packages/
+*.nupkg
+*.exe
+*.dll
+*.pdb
+
+## Dados locais de execução (logs, framework.ini, diagnostics.txt)
+/runtime/
