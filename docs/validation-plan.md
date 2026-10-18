@@ -8,7 +8,7 @@ Reference: Intel Core i3-1005G1 · Intel UHD Graphics G1 (integrated) · 20 GB R
 |---|---|---|
 | Restore and build (Windows x64 and Arch container) | Yes | — |
 | Static packaging check: both renderer types in `osu.Framework.dll`, Veldrid runtime dependencies in `deps.json` and the output folder (not that they work) | Yes | — |
-| Headless NUnit tests (visual and unit) | Yes | — |
+| Headless NUnit tests (visual and unit); on Arch, audio runs on an ALSA null device (no sound is played) | Yes | — |
 | OpenGL on a physical GPU | **No** | **Yes** |
 | Vulkan on a physical GPU | **No** | **Yes** |
 | Vulkan → OpenGL fallback | **No** | **Yes** |

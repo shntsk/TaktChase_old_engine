@@ -33,7 +33,7 @@ jobs:
       image: archlinux:latest
     steps:
       - name: Install dependencies (pacman)
-        run: pacman -Syu --noconfirm --needed git jq dotnet-sdk-10.0
+        run: pacman -Syu --noconfirm --needed git jq dotnet-sdk-10.0 alsa-lib alsa-plugins
 
       - uses: actions/checkout@v7
 
@@ -114,6 +114,18 @@ jobs:
           done
 
           echo "Both rendering paths are present: GLRenderer and VeldridRenderer in osu.Framework.dll, Veldrid runtime dependencies resolved and copied."
+
+      - name: Headless audio environment (ALSA null device)
+        run: |
+          # The visual tests start a full framework host, which initializes BASS audio. osu.Framework asserts that BASS
+          # reports at least 2 devices ("No sound" + the default device), which fails on a container with no ALSA
+          # library and no sound card ("Bass did not provide any audio devices."). alsa-lib is installed above; this
+          # step gives ALSA a "default" PCM that discards audio, so the host can initialize without hardware.
+          # It changes only the CI environment; the tests and the game code are untouched.
+          printf 'pcm.!default {\n  type null\n}\n' > /etc/asound.conf
+          echo "--- /etc/asound.conf"; cat /etc/asound.conf
+          echo "--- libasound"; ldconfig -p | grep -i libasound || echo "libasound NOT found"
+          echo "--- sound cards"; cat /proc/asound/cards 2>/dev/null || echo "no sound cards (expected in CI)"
 
       - name: Test
         run: dotnet test TaktChase.sln -c Release --no-build --logger "console;verbosity=normal"
