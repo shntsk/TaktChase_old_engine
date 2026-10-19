@@ -102,8 +102,8 @@ internal static class AndroidStartupDiagnostics
         string report = "Status=" + status + Environment.NewLine
                         + "TimestampUtc=" + DateTimeOffset.UtcNow.ToString("O") + Environment.NewLine
                         + "LastStage=" + stage + Environment.NewLine
-                        + "AndroidVersion=" + Android.OS.Build.VERSION.Release + Environment.NewLine
-                        + "ApiLevel=" + (int)Android.OS.Build.VERSION.SdkInt + Environment.NewLine;
+                        + "AndroidVersion=" + global::Android.OS.Build.VERSION.Release + Environment.NewLine
+                        + "ApiLevel=" + (int)global::Android.OS.Build.VERSION.SdkInt + Environment.NewLine;
 
         if (!string.IsNullOrEmpty(exception))
         {

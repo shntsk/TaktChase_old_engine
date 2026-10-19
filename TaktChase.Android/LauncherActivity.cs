@@ -103,5 +103,9 @@ public sealed class LauncherActivity : Activity
         SetContentView(root);
     }
 
-    private int dp(int value) => (int)(value * Resources.DisplayMetrics!.Density + 0.5f);
+    private int dp(int value)
+    {
+        float density = Resources?.DisplayMetrics?.Density ?? 1f;
+        return (int)(value * density + 0.5f);
+    }
 }
