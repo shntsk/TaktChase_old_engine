@@ -16,8 +16,8 @@ namespace TaktChase.Android;
 /// </summary>
 [Activity(
     Label = "TaktChase",
-    MainLauncher = true,
-    Exported = true,
+    MainLauncher = false,
+    Exported = false,
     LaunchMode = DEFAULT_LAUNCH_MODE,
     ConfigurationChanges = DEFAULT_CONFIG_CHANGES,
     ScreenOrientation = ScreenOrientation.SensorLandscape,
@@ -25,13 +25,22 @@ namespace TaktChase.Android;
 public class MainActivity : AndroidGameActivity
 {
     // "Game" alone would resolve to the TaktChase.Game namespace here, so the framework type is fully qualified.
-    protected override osu.Framework.Game CreateGame() => new TaktChaseGame();
+    protected override osu.Framework.Game CreateGame()
+    {
+        AndroidStartupDiagnostics.ReportStage("AndroidGameActivity.CreateGame");
+        return new TaktChaseGame();
+    }
 
     protected override void OnCreate(Bundle? savedInstanceState)
     {
-        RuntimeLogCapture.Attach();
+        StartupState.ProgressReporter = AndroidStartupDiagnostics.ReportStage;
+        AndroidStartupDiagnostics.ReportStage("MainActivity.OnCreate before base.OnCreate");
 
         base.OnCreate(savedInstanceState);
+
+        AndroidStartupDiagnostics.ReportStage("AndroidGameActivity.OnCreate completed");
+        RuntimeLogCapture.Attach();
+        AndroidStartupDiagnostics.ReportStage("RuntimeLogCapture.Attach completed");
 
         allowDrawingIntoDisplayCutout();
         enterImmersiveMode();

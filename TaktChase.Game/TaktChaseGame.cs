@@ -24,6 +24,7 @@ public partial class TaktChaseGame : TaktChaseGameBase
     private DiagnosticsPanel diagnosticsPanel = null!;
     private GraphicsReport report = GraphicsReport.Unavailable;
     private GameHost gameHost = null!;
+    private bool firstUpdateReported;
 
     public TaktChaseGame()
         : this(LaunchOptions.Default)
@@ -74,9 +75,21 @@ public partial class TaktChaseGame : TaktChaseGameBase
 
         // Stage 1: launch straight into the demonstration gameplay (HomeScreen is kept but no longer shown).
         screenStack.Push(new GameplayScreen(options.AudioOffset));
+        StartupState.ReportProgress("Initial gameplay screen created");
 
         // From here on, failures are no longer treated as a renderer startup failure.
         StartupState.MarkCompleted();
+    }
+
+    protected override void Update()
+    {
+        base.Update();
+
+        if (firstUpdateReported)
+            return;
+
+        firstUpdateReported = true;
+        StartupState.ReportProgress("First game update completed");
     }
 
     protected override bool OnKeyDown(KeyDownEvent e)

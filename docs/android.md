@@ -9,7 +9,7 @@ CS. The gameplay rules, the demo music and the desktop controls (mouse, Z/X, Esc
 ## Structure
 
 ```
-TaktChase.Android/   Android application (net10.0-android): MainActivity, AndroidManifest.xml
+TaktChase.Android/   Android application (net10.0-android): LauncherActivity, MainActivity, startup diagnostics, AndroidManifest.xml
 TaktChase.Game/      shared gameplay (unchanged architecture; small input/lifecycle additions, see below)
 TaktChase.Resources/ embedded textures and the demo track (loaded the same way on Android)
 ```
@@ -30,6 +30,14 @@ and Windows workflows (which restore and build the solution) must not install it
 The workflow installs the .NET Android workload and a JDK (Temurin 21), installs the Android SDK packages the build needs into a temporary
 directory, builds with `-t:SignAndroidPackage`, checks that exactly one signed APK with `arm64-v8a` native libraries exists, and uploads it.
 No step uses `continue-on-error`; any failure fails the job.
+
+## Startup crash report
+
+The native Android launcher checks a small status file in the app's private storage before starting the SDL game activity. If the previous
+launch exited before the first game update, reopening TaktChase shows a native Android report with the last recorded startup stage and any managed
+unhandled exception that was captured. The screen provides **Copy report** and **Try again** buttons; using ADB is not required. Native crashes and
+system-terminated processes may not provide a managed exception, so in those cases the report identifies the last stage only. Once the first game update
+completes, the state changes to RUNNING and an old startup report is no longer shown.
 
 ## Android host setup
 
@@ -117,7 +125,7 @@ Windows workflows together with all earlier tests. Those tests do not exercise A
 Install the debug APK on an arm64 phone (and note the model and Android version):
 
 1. **Launch.** The game opens in landscape (also after rotating the phone 180 degrees), without status or navigation bars, and starts the demo map.
-   If it closes at startup, collect `adb logcat`.
+   If it closes at startup, reopen the app to see the built-in startup report, then use **Copy report** or **Try again**.
 2. **Rendering.** The playfield is centered, circles are round and sharp, text is readable. On a phone with a notch or punch hole, no HUD text is
    covered. Check a phone with rounded corners. Record the frame rate if it looks low.
 3. **Touch input.** A tap on a circle hits it at the tapped position (tap the edge of a circle and just outside it). Two fingers alternating on two circles

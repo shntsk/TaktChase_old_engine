@@ -22,6 +22,11 @@ public static class StartupState
 
     public static IReadOnlyList<string> Notes { get; private set; } = Array.Empty<string>();
 
+    /// <summary>Optional platform hook used to persist startup progress without introducing platform dependencies into the game.</summary>
+    public static Action<string>? ProgressReporter { get; set; }
+
+    public static void ReportProgress(string stage) => ProgressReporter?.Invoke(stage);
+
     public static void Configure(LaunchOptions options, VulkanProbeResult? probe, IReadOnlyList<string> notes)
     {
         Options = options;
