@@ -25,6 +25,12 @@
     <PackageReference Include="ppy.osu.Framework.Android" Version="2026.1008.0" />
   </ItemGroup>
   <ItemGroup>
+    <!-- ManagedBass is a P/Invoke wrapper; ship the matching native libraries in the APK as well. -->
+    <AndroidNativeLibrary Include="Native\arm64-v8a\libbass.so" />
+    <AndroidNativeLibrary Include="Native\arm64-v8a\libbass_fx.so" />
+    <AndroidNativeLibrary Include="Native\arm64-v8a\libbassmix.so" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\TaktChase.Game\TaktChase.Game.csproj" />
   </ItemGroup>
 </Project>

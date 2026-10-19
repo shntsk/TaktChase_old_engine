@@ -89,10 +89,19 @@ jobs:
           apk="${apks[0]}"
           echo "path=$apk" >> "$GITHUB_OUTPUT"
           ls -l "$apk"
-          # The APK must carry native libraries for arm64-v8a (the only ABI this project builds).
-          unzip -l "$apk" | grep -E 'lib/arm64-v8a/.+\.so' > /dev/null \
-            || { echo "::error::No lib/arm64-v8a/*.so entries in the APK"; exit 1; }
-          unzip -l "$apk" | grep -E 'lib/(armeabi-v7a|x86|x86_64)/' && { echo "::error::Unexpected extra ABI in the APK"; exit 1; } || true
+          # Check the exact native audio dependencies needed by osu!framework, not just any .so file.
+          entries="$(unzip -Z1 "$apk")"
+          for library in libbass.so libbass_fx.so libbassmix.so; do
+            if ! grep -Fxq "lib/arm64-v8a/$library" <<< "$entries"; then
+              echo "::error::Required native audio library is missing from APK: lib/arm64-v8a/$library"
+              exit 1
+            fi
+            echo "Verified native audio library: lib/arm64-v8a/$library"
+          done
+          if grep -Eq '^lib/(armeabi-v7a|x86|x86_64)/' <<< "$entries"; then
+            echo "::error::Unexpected extra ABI in the APK"
+            exit 1
+          fi
           unzip -l "$apk" | tail -n 40
 
       - name: Upload debug APK

@@ -58,7 +58,20 @@ Verified against `ppy/osu-framework` at tag `2026.1008.0` (`SampleGame.Android`,
   (`TaktChaseLauncher`) and are not used; the framework picks its own backend. Which backend it picked appears in the F3 report when a keyboard is
   attached, and in `diagnostics.txt`.
 
-### ABI strategy
+### Android native audio libraries
+
+The managed `ppy.ManagedBass` wrapper calls the native BASS library by name (`bass`). The Android NuGet reference does not make the required
+Android binaries appear in this APK automatically, so the app explicitly packages the matching native libraries copied unmodified from
+`ppy/osu-framework` tag `2026.1008.0`:
+
+- `Native/arm64-v8a/libbass.so`
+- `Native/arm64-v8a/libbass_fx.so`
+- `Native/arm64-v8a/libbassmix.so`
+
+The Android project declares them as `AndroidNativeLibrary` build items. The Android CI inspects the signed APK and fails unless all three exact
+`lib/arm64-v8a/` entries are present. This checks packaging, though it cannot replace launching and testing audio on a physical phone.
+
+## ABI strategy
 
 Only **`arm64-v8a`** is built (`RuntimeIdentifier` `android-arm64`). That covers modern phones and keeps the build fast and the APK small.
 The framework's Android package also ships `armeabi-v7a` and `x86` native libraries, and its own props list `android-arm`, `android-arm64` and
