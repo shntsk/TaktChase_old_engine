@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using Android.Content;
-using Android.OS;
 
 namespace TaktChase.Android;
 
@@ -103,8 +102,8 @@ internal static class AndroidStartupDiagnostics
         string report = "Status=" + status + Environment.NewLine
                         + "TimestampUtc=" + DateTimeOffset.UtcNow.ToString("O") + Environment.NewLine
                         + "LastStage=" + stage + Environment.NewLine
-                        + "AndroidVersion=" + Build.VERSION.Release + Environment.NewLine
-                        + "ApiLevel=" + (int)Build.VERSION.SdkInt + Environment.NewLine;
+                        + "AndroidVersion=" + Android.OS.Build.VERSION.Release + Environment.NewLine
+                        + "ApiLevel=" + (int)Android.OS.Build.VERSION.SdkInt + Environment.NewLine;
 
         if (!string.IsNullOrEmpty(exception))
         {

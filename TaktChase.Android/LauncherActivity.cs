@@ -80,7 +80,6 @@ public sealed class LauncherActivity : Activity
         var actions = new LinearLayout(this)
         {
             Orientation = Orientation.Horizontal,
-            Gravity = GravityFlags.End,
         };
 
         var copy = new Button(this) { Text = "Copy report" };
