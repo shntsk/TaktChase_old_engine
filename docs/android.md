@@ -60,11 +60,11 @@ Verified against `ppy/osu-framework` at tag `2026.1008.0` (`SampleGame.Android`,
 
 ### Android native audio libraries
 
-The managed `ppy.ManagedBass` wrapper calls the native BASS library by name (`bass`). The shared `ppy.osu.Framework` package also
-references `ppy.osu.Framework.NativeLibs`, a desktop runtime package containing Linux BASS binaries. Those Linux assets can collide with the Android
-files at the same APK paths and be selected first, even when the Android project declares its own `AndroidNativeLibrary` items. The Android project
-therefore excludes the desktop package's runtime assets for this app and explicitly includes the matching Android binaries copied unmodified from
-`ppy/osu-framework` tag `2026.1008.0`:
+The managed `ppy.ManagedBass` wrapper calls the native BASS library by name (`bass`). The shared `TaktChase.Game` project targets plain
+`net10.0` and transitively consumes `ppy.osu.Framework.NativeLibs`, which contains desktop Linux BASS binaries. During Android packaging, those
+`linux-arm64` runtime assets can be selected before the correct Android libraries, then silently win a duplicate-path conflict (`XA4301`). The
+Android project uses a target after `ResolvePackageAssets` to remove package-resolved Linux assets from the Android native copy lists, and explicitly
+includes the matching Android binaries copied unmodified from `ppy/osu-framework` tag `2026.1008.0`:
 
 - `Native/arm64-v8a/libbass.so`
 - `Native/arm64-v8a/libbass_fx.so`
