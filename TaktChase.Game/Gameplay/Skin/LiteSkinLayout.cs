@@ -1,5 +1,12 @@
 using System;
 using System.Collections.Generic;
+using osu.Framework.Allocation;
+using osu.Framework.Graphics;
+using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Sprites;
+using osu.Framework.Graphics.Textures;
+using osuTK;
+using TaktChase.Game.Gameplay.Judgements;
 
 namespace TaktChase.Game.Gameplay.Skin;
 
@@ -17,6 +24,10 @@ public static class LiteSkinLayout
 
     public const string APPROACH_CIRCLE_TEXTURE = "Skin/lite/approachcircle";
 
+    public const string CURSOR_TEXTURE = "Skin/lite/cursor";
+
+    public const string CURSOR_TRAIL_TEXTURE = "Skin/lite/cursortrail";
+
     public static string DigitTexture(int digit)
     {
         if (digit < 0 || digit > 9)
@@ -24,6 +35,14 @@ public static class LiteSkinLayout
 
         return $"Skin/lite/default-{digit}";
     }
+
+    public static string JudgementTexture(HitResult result) => result switch
+    {
+        HitResult.Great => "Skin/lite/judgement-green",
+        HitResult.Ok => "Skin/lite/judgement-yellow",
+        HitResult.Meh => "Skin/lite/judgement-yellow",
+        _ => "Skin/lite/judgement-miss",
+    };
 
     /// <summary>Size of hitcircle.svg including its shadow margin.</summary>
     public const float HIT_CIRCLE_IMAGE_SIZE = 300f;
