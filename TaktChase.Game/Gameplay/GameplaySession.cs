@@ -59,6 +59,30 @@ public sealed class GameplaySession
         return true;
     }
 
+    /// <summary>
+    /// Pauses if the session is running. Unlike <see cref="TogglePause"/> it is idempotent, so it is safe to call from lifecycle
+    /// events that may fire more than once (for example the app losing focus). Returns <c>true</c> only if the state changed;
+    /// it does nothing once the map is finished.
+    /// </summary>
+    public bool Pause()
+    {
+        if (IsPaused || Engine.IsFinished)
+            return false;
+
+        IsPaused = true;
+        return true;
+    }
+
+    /// <summary>Resumes if the session is paused. Returns <c>true</c> only if the state changed.</summary>
+    public bool Resume()
+    {
+        if (!IsPaused)
+            return false;
+
+        IsPaused = false;
+        return true;
+    }
+
     /// <summary>Whether the results should be shown now (once, after <see cref="RESULTS_DELAY"/> past the finish).</summary>
     public bool ShouldShowResults(double time) => !ResultsShown && FinishedAt is double finished && time >= finished + RESULTS_DELAY;
 

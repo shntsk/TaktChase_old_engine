@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-android</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>TaktChase.Android</AssemblyName>
+    <RootNamespace>TaktChase.Android</RootNamespace>
+    <!-- Directory.Build.props points every project at the Windows app.manifest; it means nothing for an Android app. -->
+    <ApplicationManifest />
+    <!--
+      The properties below mirror osu.Framework.Android.props at tag 2026.1008.0 (the file that SampleGame.Android imports from the
+      framework repository; it is not part of the NuGet package, so it is repeated here). RuntimeIdentifiers is narrowed to
+      android-arm64 on purpose, see docs/android.md.
+    -->
+    <SupportedOSPlatformVersion>21.0</SupportedOSPlatformVersion>
+    <RuntimeIdentifier>android-arm64</RuntimeIdentifier>
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
+    <AndroidHttpClientHandlerType>Xamarin.Android.Net.AndroidMessageHandler</AndroidHttpClientHandlerType>
+    <!-- NullabilityInfoContextSupport is disabled by default for Android. -->
+    <NullabilityInfoContextSupport>true</NullabilityInfoContextSupport>
+    <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+    <NoWarn>$(NoWarn);XA4218</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Same version as ppy.osu.Framework in TaktChase.Game; the Android host package is versioned in lockstep with the framework. -->
+    <PackageReference Include="ppy.osu.Framework.Android" Version="2026.1008.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TaktChase.Game\TaktChase.Game.csproj" />
+  </ItemGroup>
+</Project>

@@ -2,12 +2,14 @@ using System;
 using System.Collections.Generic;
 using osu.Framework.Allocation;
 using osu.Framework.Audio.Track;
+using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Input.Events;
 using osu.Framework.Logging;
+using osu.Framework.Platform;
 using osuTK;
 using osuTK.Input;
 using TaktChase.Game.Gameplay.Beatmaps;
@@ -46,6 +48,11 @@ public partial class GameplayPlayer : Container
     private bool stopped;
     private bool audioReleased;
 
+    // True on touchscreen platforms (Android/iOS): enables touch prompts and pausing when the app loses focus.
+    // Desktop behaviour (mouse, Z/X, no automatic pause) is unaffected.
+    private readonly bool touchPlatform = osu.Framework.RuntimeInfo.IsMobile;
+    private readonly IBindable<bool> hostActive = new Bindable<bool>(true);
+
     private Container playfield = null!;
     private readonly List<DrawableHitCircle> active = new List<DrawableHitCircle>();
     private readonly Dictionary<int, DrawableHitCircle> byIndex = new Dictionary<int, DrawableHitCircle>();
@@ -76,7 +83,7 @@ public partial class GameplayPlayer : Container
     public override bool ReceivePositionalInputAt(Vector2 screenSpacePos) => true;
 
     [BackgroundDependencyLoader]
-    private void load(ITrackStore tracks)
+    private void load(ITrackStore tracks, GameHost host)
     {
         trackStore = tracks;
         // The judgement windows come from the beatmap's Overall Difficulty.
@@ -114,22 +121,39 @@ public partial class GameplayPlayer : Container
                 Height = 6,
                 Colour = TaktPalette.CHASE,
             },
-            scoreText = text(Anchor.TopRight, 52, "Bold", new MarginPadding { Top = 24, Right = 40 }),
-            accuracyText = text(Anchor.TopRight, 28, null, new MarginPadding { Top = 86, Right = 40 }),
-            progressText = text(Anchor.TopLeft, 24, null, new MarginPadding { Top = 24, Left = 40 }),
-            comboText = text(Anchor.BottomLeft, 72, "Bold", new MarginPadding { Bottom = 24, Left = 40 }),
-            errorBar = new HitErrorBar(engine.Windows)
+            // The HUD keeps clear of display cutouts and rounded corners. The padding comes from the host window's safe area
+            // and is zero on desktop windows, so the desktop layout does not change.
+            new SafeAreaContainer
             {
-                Anchor = Anchor.BottomCentre,
-                Origin = Anchor.BottomCentre,
-                Margin = new MarginPadding { Bottom = 40 },
+                RelativeSizeAxes = Axes.Both,
+                Children = new Drawable[]
+                {
+                    scoreText = text(Anchor.TopRight, 52, "Bold", new MarginPadding { Top = 24, Right = 40 }),
+                    accuracyText = text(Anchor.TopRight, 28, null, new MarginPadding { Top = 86, Right = 40 }),
+                    progressText = text(Anchor.TopLeft, 24, null, new MarginPadding { Top = 24, Left = 40 }),
+                    comboText = text(Anchor.BottomLeft, 72, "Bold", new MarginPadding { Bottom = 24, Left = 40 }),
+                    errorBar = new HitErrorBar(engine.Windows)
+                    {
+                        Anchor = Anchor.BottomCentre,
+                        Origin = Anchor.BottomCentre,
+                        Margin = new MarginPadding { Bottom = 40 },
+                    },
+                    statusText = text(Anchor.Centre, 40, "Bold", new MarginPadding()),
+                },
             },
-            statusText = text(Anchor.Centre, 40, "Bold", new MarginPadding()),
             resultsPanel = createResultsPanel(),
         };
 
         statusText.Text = "Loading audio...";
         refreshHud();
+
+        // On touch platforms the game pauses itself when the window loses focus (notification shade, app switcher, home button).
+        hostActive.BindTo(host.IsActive);
+        hostActive.BindValueChanged(change =>
+        {
+            if (!change.NewValue && touchPlatform)
+                Schedule(() => pause());
+        });
     }
 
     // Raised on the audio thread: only set flags here.
@@ -320,7 +344,7 @@ public partial class GameplayPlayer : Container
             $"Score  {s.Score:N0}\nAccuracy  {s.Accuracy * 100:0.00}%\nMax combo  {s.MaxCombo}x\n" +
             $"300 {s.CountOf(HitResult.Great)}   100 {s.CountOf(HitResult.Ok)}   50 {s.CountOf(HitResult.Meh)}   Miss {s.CountOf(HitResult.Miss)}\n" +
             $"Mean error  {s.MeanHitError:+0.0;-0.0;0.0} ms   Deviation  {s.HitErrorDeviation:0.0} ms\n\n" +
-            "Press R to play again";
+            (touchPlatform ? "Tap to play again" : "Press R to play again");
 
         resultsPanel.FadeIn(400, Easing.OutQuint);
     }
@@ -338,22 +362,66 @@ public partial class GameplayPlayer : Container
         session.Press(clock.EstimateCurrentTime(), pointer);
     }
 
+    private string pausedText => touchPlatform ? "PAUSED\nTap to resume" : "PAUSED";
+
     private void togglePause()
     {
-        if (stopped || clock == null || !session.TogglePause())
+        if (stopped || clock == null)
             return;
 
         if (session.IsPaused)
-            clock.Pause();
+            resume();
         else
-            clock.Resume();
+            pause();
+    }
 
-        statusText.Text = session.IsPaused ? "PAUSED" : string.Empty;
+    /// <summary>Pauses the session and the clock (and with it the audio track). Does nothing if already paused or finished.</summary>
+    private void pause()
+    {
+        if (stopped || clock == null || !session.Pause())
+            return;
+
+        clock.Pause();
+        statusText.Text = pausedText;
+    }
+
+    private void resume()
+    {
+        if (stopped || clock == null || !session.Resume())
+            return;
+
+        clock.Resume();
+        statusText.Text = string.Empty;
     }
 
     protected override bool OnMouseDown(MouseDownEvent e)
     {
         press(e.ScreenSpaceMousePosition);
+        return true;
+    }
+
+    /// <summary>
+    /// Every finger is its own press. Handling the touch here (instead of letting the framework turn it into mouse input) matters:
+    /// the framework maps all touches to ONE mouse button, so a second finger pressed while the first is still down would
+    /// never produce a new press. Because this handler returns true, the framework does not also emit mouse events for the touch.
+    /// </summary>
+    protected override bool OnTouchDown(TouchDownEvent e)
+    {
+        switch (TouchInputMapper.Map(session))
+        {
+            case TouchAction.Restart:
+                RestartRequested?.Invoke();
+                break;
+
+            case TouchAction.Resume:
+                resume();
+                break;
+
+            default:
+                press(e.ScreenSpaceTouch.Position);
+                break;
+        }
+
         return true;
     }
 

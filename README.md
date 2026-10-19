@@ -33,10 +33,11 @@ Structure (same organization as the template: Game / Desktop / Game.Tests / Reso
 TaktChase.sln
 TaktChase.Game/       game logic, home screen, diagnostics, backend selection
 TaktChase.Desktop/    thin entry point (WinExe)
+TaktChase.Android/    Android application (not part of the solution, see docs/android.md)
 TaktChase.Game.Tests/ visual test browser, test scenes, and unit tests (NUnit)
 TaktChase.Resources/  embedded textures (TaktChase's own logo mark)
-.github/workflows/    ci-windows.yml, ci-arch.yml
-docs/                 validation-plan.md, static-review.md, dependency-audit.md
+.github/workflows/    ci-windows.yml, ci-arch.yml, ci-android.yml (+ release.yml)
+docs/                 validation-plan.md, static-review.md, dependency-audit.md, android.md
 ```
 
 > The template was reproduced by hand (`dotnet new` was not run) and then compared statically with the files published in
@@ -259,3 +260,14 @@ OD 5, AR 7, CS 4 (TaktChase's own choice). **This is not claimed to be exact osu
 
 Status: written without a local .NET SDK. Nothing in stages 1-2 has been built or tested by the author; validate through the
 CI workflows (compilation and the NUnit tests) and on real hardware (see `docs/validation-plan.md`).
+
+## Android (platform stage 1)
+
+An Android host runs the same demo gameplay (`TaktChase.Android`, built on `ppy.osu.Framework.Android` 2026.1008.0, `arm64-v8a` only).
+Touch input is handled per finger, the HUD respects display cutouts, and the game pauses when the app loses focus. Nothing was built
+or run by the author.
+
+- **Build the APK:** push the repository, open the finished **CI Android arm64-v8a** run in the Actions tab and download the
+  **`taktchase-android-debug-apk`** artifact (unzip it, then install the APK on the phone).
+- CI proves only that the APK **builds**. Touch, audio timing, pause/resume and rendering must be checked on a real phone.
+- Details, the touch-input path, the ABI strategy, unverified assumptions and the real-device checklist: [`docs/android.md`](docs/android.md).

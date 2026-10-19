@@ -114,3 +114,7 @@ Check these on real hardware (Arch and Windows, with and without `--renderer=vul
    laptop's native resolution.
 7. **Completion.** Let the map finish with a mix of hits and misses: the results appear 1.2 s after the last judgement and match
    the HUD (score, accuracy, counts).
+
+## Android
+
+The Android build and the real-device checks (touch, audio timing, pause/resume, rendering) are described in [`android.md`](android.md).
