@@ -24,6 +24,8 @@ namespace TaktChase.Android;
     Theme = "@android:style/Theme.Black.NoTitleBar.Fullscreen")]
 public class MainActivity : AndroidGameActivity
 {
+    private volatile bool startupReachedFirstUpdate;
+
     // "Game" alone would resolve to the TaktChase.Game namespace here, so the framework type is fully qualified.
     protected override osu.Framework.Game CreateGame()
     {
@@ -33,7 +35,7 @@ public class MainActivity : AndroidGameActivity
 
     protected override void OnCreate(Bundle? savedInstanceState)
     {
-        StartupState.ProgressReporter = AndroidStartupDiagnostics.ReportStage;
+        StartupState.ProgressReporter = reportStartupProgress;
         AndroidStartupDiagnostics.ReportStage("MainActivity.OnCreate before base.OnCreate");
 
         base.OnCreate(savedInstanceState);
@@ -52,7 +54,22 @@ public class MainActivity : AndroidGameActivity
 
         // The system bars come back after a swipe, a dialog or the app switcher; hide them again whenever focus returns.
         if (hasFocus)
+        {
             enterImmersiveMode();
+
+            // The launcher may be opened again while this single-instance game activity is still alive.
+            // Restore the running marker when that existing activity returns to the foreground.
+            if (startupReachedFirstUpdate)
+                AndroidStartupDiagnostics.ReportStage("First game update completed");
+        }
+    }
+
+    private void reportStartupProgress(string stage)
+    {
+        AndroidStartupDiagnostics.ReportStage(stage);
+
+        if (stage == "First game update completed")
+            startupReachedFirstUpdate = true;
     }
 
     /// <summary>

@@ -4,7 +4,6 @@ using Android.Graphics;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
-using TaktChase.Game.Startup;
 
 namespace TaktChase.Android;
 
@@ -23,8 +22,6 @@ public sealed class LauncherActivity : Activity
         base.OnCreate(savedInstanceState);
 
         AndroidStartupDiagnostics.Initialize(this);
-        StartupState.ProgressReporter = AndroidStartupDiagnostics.ReportStage;
-
         string? previousFailure = AndroidStartupDiagnostics.ReadPreviousFailure();
         if (previousFailure == null)
         {
