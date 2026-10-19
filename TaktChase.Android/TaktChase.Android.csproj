@@ -23,6 +23,11 @@
   <ItemGroup>
     <!-- Same version as ppy.osu.Framework in TaktChase.Game; the Android host package is versioned in lockstep with the framework. -->
     <PackageReference Include="ppy.osu.Framework.Android" Version="2026.1008.0" />
+    <!--
+      The shared ppy.osu.Framework package transitively references ppy.osu.Framework.NativeLibs for desktop platforms.
+      Exclude those Linux runtime assets from this Android app so they cannot shadow the Android BASS libraries below.
+    -->
+    <PackageReference Include="ppy.osu.Framework.NativeLibs" Version="2025.806.0-nativelibs" ExcludeAssets="runtime" />
   </ItemGroup>
   <ItemGroup>
     <!-- ManagedBass is a P/Invoke wrapper; ship the matching native libraries in the APK as well. -->

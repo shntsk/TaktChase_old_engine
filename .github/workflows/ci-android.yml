@@ -89,15 +89,45 @@ jobs:
           apk="${apks[0]}"
           echo "path=$apk" >> "$GITHUB_OUTPUT"
           ls -l "$apk"
-          # Check the exact native audio dependencies needed by osu!framework, not just any .so file.
+          # Validate the native libraries' contents as well as their APK names. A transitive desktop package can otherwise
+          # place a Linux BASS binary at the same lib/arm64-v8a path and silently shadow the correct Android file.
           entries="$(unzip -Z1 "$apk")"
+          command -v readelf >/dev/null || { echo "::error::readelf is required to inspect the Android native libraries"; exit 1; }
           for library in libbass.so libbass_fx.so libbassmix.so; do
-            if ! grep -Fxq "lib/arm64-v8a/$library" <<< "$entries"; then
-              echo "::error::Required native audio library is missing from APK: lib/arm64-v8a/$library"
+            apk_entry="lib/arm64-v8a/$library"
+            source_file="TaktChase.Android/Native/arm64-v8a/$library"
+            extracted="$RUNNER_TEMP/$library"
+
+            if ! grep -Fxq "$apk_entry" <<< "$entries"; then
+              echo "::error::Required native audio library is missing from APK: $apk_entry"
               exit 1
             fi
-            echo "Verified native audio library: lib/arm64-v8a/$library"
+
+            unzip -p "$apk" "$apk_entry" > "$extracted"
+            if ! cmp -s "$source_file" "$extracted"; then
+              echo "::error::APK contains a different binary than $source_file"
+              echo "Source: $(sha256sum "$source_file")"
+              echo "APK:    $(sha256sum "$extracted")"
+              exit 1
+            fi
+
+            header="$(readelf -h "$extracted")"
+            if ! grep -Eq 'Class:[[:space:]]+ELF64' <<< "$header" || ! grep -Eq 'Machine:[[:space:]]+AArch64' <<< "$header"; then
+              echo "::error::$apk_entry is not an ELF64 AArch64 library"
+              readelf -h "$extracted" || true
+              exit 1
+            fi
+
+            dynamic="$(readelf -d "$extracted")"
+            if grep -Eq '\[(libc\.so\.6|libdl\.so\.2|libpthread\.so\.0|libm\.so\.6|libstdc\+\+\.so\.6)\]' <<< "$dynamic"; then
+              echo "::error::$apk_entry contains Linux/glibc dependencies, not Android dependencies"
+              grep -E 'NEEDED' <<< "$dynamic" || true
+              exit 1
+            fi
+
+            echo "Verified Android ELF: $apk_entry ($(sha256sum "$extracted" | cut -d' ' -f1))"
           done
+
           if grep -Eq '^lib/(armeabi-v7a|x86|x86_64)/' <<< "$entries"; then
             echo "::error::Unexpected extra ABI in the APK"
             exit 1

@@ -60,16 +60,18 @@ Verified against `ppy/osu-framework` at tag `2026.1008.0` (`SampleGame.Android`,
 
 ### Android native audio libraries
 
-The managed `ppy.ManagedBass` wrapper calls the native BASS library by name (`bass`). The Android NuGet reference does not make the required
-Android binaries appear in this APK automatically, so the app explicitly packages the matching native libraries copied unmodified from
+The managed `ppy.ManagedBass` wrapper calls the native BASS library by name (`bass`). The shared `ppy.osu.Framework` package also
+references `ppy.osu.Framework.NativeLibs`, a desktop runtime package containing Linux BASS binaries. Those Linux assets can collide with the Android
+files at the same APK paths and be selected first, even when the Android project declares its own `AndroidNativeLibrary` items. The Android project
+therefore excludes the desktop package's runtime assets for this app and explicitly includes the matching Android binaries copied unmodified from
 `ppy/osu-framework` tag `2026.1008.0`:
 
 - `Native/arm64-v8a/libbass.so`
 - `Native/arm64-v8a/libbass_fx.so`
 - `Native/arm64-v8a/libbassmix.so`
 
-The Android project declares them as `AndroidNativeLibrary` build items. The Android CI inspects the signed APK and fails unless all three exact
-`lib/arm64-v8a/` entries are present. This checks packaging, though it cannot replace launching and testing audio on a physical phone.
+The Android CI extracts the libraries from the final signed APK, verifies that their SHA-256 hashes exactly match these source files, checks the ELF64
+AArch64 machine type, and rejects Linux/glibc dependencies. A successful packaging check still cannot replace launching and testing audio on a physical phone.
 
 ## ABI strategy
 
