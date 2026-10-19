@@ -72,7 +72,8 @@ public partial class TaktChaseGame : TaktChaseGameBase
         logReport();
         writeReportFile();
 
-        screenStack.Push(new HomeScreen(report));
+        // Stage 1: launch straight into the demonstration gameplay (HomeScreen is kept but no longer shown).
+        screenStack.Push(new GameplayScreen(options.AudioOffset));
 
         // From here on, failures are no longer treated as a renderer startup failure.
         StartupState.MarkCompleted();

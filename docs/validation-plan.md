@@ -93,3 +93,24 @@ Initial / final memory:
 Stability:
 Notes:
 ```
+
+## Gameplay prototype (stages 1-2): what CI cannot show
+
+CI runs the NUnit tests in `TaktChase.Game.Tests/Unit/Gameplay` (rules, score, clock maths, session flow). It does not play the game.
+Check these on real hardware (Arch and Windows, with and without `--renderer=vulkan`):
+
+1. **Audio plays and stays in sync.** The demo track starts after the 1 s lead-in; circles reach their approach target on the kick.
+   If it plays silently, the framework log has "[TaktChase] Audio track ... playing silently".
+2. **Audio offset sign.** Run with `--audio-offset=0`, tap exactly on the kicks, and read "Mean error" on the results screen
+   (negative = early). Re-run with `--audio-offset=<that value, sign flipped if needed>` and confirm the mean error moves toward 0.
+   The documented convention is: positive offset = sound reaches you late.
+3. **Input timing.** The hit error bar must not show a consistent early/late bias that depends on the display refresh rate
+   (compare 60 Hz and a high-refresh display if available). The input time is an estimate, not a hardware timestamp.
+4. **Pause/resume.** Pause in the middle of a section, wait 10+ seconds, resume: the music continues at the same point, no object
+   is missed because of the pause, and circles resume their approach from where they stopped.
+5. **Restart (R).** Press R repeatedly (also during a pause and on the results screen): only one track plays at a time and memory
+   does not grow noticeably.
+6. **Visual feel.** Fade-in, approach circle and hit/miss feedback at AR 7, CS 4; check legibility on the Intel UHD G1 at the
+   laptop's native resolution.
+7. **Completion.** Let the map finish with a mix of hits and misses: the results appear 1.2 s after the last judgement and match
+   the HUD (score, accuracy, counts).

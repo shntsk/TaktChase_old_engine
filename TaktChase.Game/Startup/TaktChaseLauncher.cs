@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using osu.Framework;
@@ -124,6 +125,9 @@ public static class TaktChaseLauncher
 
             if (options.ShowFps)
                 startInfo.ArgumentList.Add("--show-fps");
+
+            if (options.AudioOffset != 0)
+                startInfo.ArgumentList.Add("--audio-offset=" + options.AudioOffset.ToString("R", CultureInfo.InvariantCulture));
 
             startInfo.Environment[LaunchOptions.FALLBACK_FROM_ENV] = "Vulkan";
             startInfo.Environment[LaunchOptions.FALLBACK_REASON_ENV] = reason;

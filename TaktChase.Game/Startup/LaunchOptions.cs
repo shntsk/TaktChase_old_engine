@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace TaktChase.Game.Startup;
 
@@ -15,7 +16,7 @@ public sealed class LaunchOptions
     /// <summary>Short reason for the failure that triggered the fallback (free text).</summary>
     public const string FALLBACK_REASON_ENV = "TAKTCHASE_FALLBACK_REASON";
 
-    public static LaunchOptions Default => new LaunchOptions(RendererRequest.Auto, false, false, null, null, Array.Empty<string>());
+    public static LaunchOptions Default => new LaunchOptions(RendererRequest.Auto, false, false, 0, null, null, Array.Empty<string>());
 
     public RendererRequest Renderer { get; }
 
@@ -24,6 +25,15 @@ public sealed class LaunchOptions
 
     /// <summary>Disables the automatic OpenGL restart when Vulkan fails (<c>--no-fallback</c>).</summary>
     public bool NoFallback { get; }
+
+    /// <summary>Largest accepted absolute value of <c>--audio-offset</c>, in milliseconds.</summary>
+    public const double MAX_AUDIO_OFFSET = 1000;
+
+    /// <summary>
+    /// Global audio offset in milliseconds (<c>--audio-offset=&lt;ms&gt;</c>): positive when the audio reaches the player late.
+    /// See <c>GameplayClock.AudioOffset</c>.
+    /// </summary>
+    public double AudioOffset { get; }
 
     /// <summary>The backend that failed when this run is a fallback; otherwise null.</summary>
     public string? FallbackFrom { get; }
@@ -35,11 +45,12 @@ public sealed class LaunchOptions
 
     public bool IsFallbackRun => FallbackFrom != null;
 
-    private LaunchOptions(RendererRequest renderer, bool showFps, bool noFallback, string? fallbackFrom, string? fallbackReason, IReadOnlyList<string> warnings)
+    private LaunchOptions(RendererRequest renderer, bool showFps, bool noFallback, double audioOffset, string? fallbackFrom, string? fallbackReason, IReadOnlyList<string> warnings)
     {
         Renderer = renderer;
         ShowFps = showFps;
         NoFallback = noFallback;
+        AudioOffset = audioOffset;
         FallbackFrom = fallbackFrom;
         FallbackReason = fallbackReason;
         Warnings = warnings;
@@ -50,6 +61,7 @@ public sealed class LaunchOptions
         var renderer = RendererRequest.Auto;
         bool showFps = false;
         bool noFallback = false;
+        double audioOffset = 0;
         var warnings = new List<string>();
 
         for (int i = 0; i < args.Count; i++)
@@ -69,6 +81,15 @@ public sealed class LaunchOptions
                 else
                     warnings.Add("--renderer has no value; using auto.");
             }
+            else if (arg.StartsWith("--audio-offset=", StringComparison.OrdinalIgnoreCase))
+                audioOffset = parseAudioOffset(arg.Substring("--audio-offset=".Length), warnings);
+            else if (arg.Equals("--audio-offset", StringComparison.OrdinalIgnoreCase))
+            {
+                if (i + 1 < args.Count)
+                    audioOffset = parseAudioOffset(args[++i], warnings);
+                else
+                    warnings.Add("--audio-offset has no value; using 0.");
+            }
             else
                 warnings.Add($"Unknown argument ignored: {arg}");
         }
@@ -76,7 +97,7 @@ public sealed class LaunchOptions
         string? fallbackFrom = emptyToNull(getEnvironmentVariable(FALLBACK_FROM_ENV));
         string? fallbackReason = emptyToNull(getEnvironmentVariable(FALLBACK_REASON_ENV));
 
-        return new LaunchOptions(renderer, showFps, noFallback, fallbackFrom, fallbackReason, warnings);
+        return new LaunchOptions(renderer, showFps, noFallback, audioOffset, fallbackFrom, fallbackReason, warnings);
     }
 
     private static RendererRequest parseRenderer(string value, List<string> warnings)
@@ -98,6 +119,23 @@ public sealed class LaunchOptions
                 warnings.Add($"Invalid value for --renderer: '{value}'. Accepted values: auto, opengl, vulkan. Using auto.");
                 return RendererRequest.Auto;
         }
+    }
+
+    private static double parseAudioOffset(string value, List<string> warnings)
+    {
+        if (!double.TryParse(value.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out double offset) || double.IsNaN(offset) || double.IsInfinity(offset))
+        {
+            warnings.Add($"Invalid value for --audio-offset: '{value}'. Expected a number of milliseconds. Using 0.");
+            return 0;
+        }
+
+        if (Math.Abs(offset) > MAX_AUDIO_OFFSET)
+        {
+            warnings.Add($"--audio-offset {value} is outside +/-{MAX_AUDIO_OFFSET} ms. Using {Math.Sign(offset) * MAX_AUDIO_OFFSET} ms.");
+            return Math.Sign(offset) * MAX_AUDIO_OFFSET;
+        }
+
+        return offset;
     }
 
     private static string? emptyToNull(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
