@@ -271,3 +271,10 @@ or run by the author.
   **`taktchase-android-debug-apk`** artifact (unzip it, then install the APK on the phone).
 - CI proves only that the APK **builds**. Touch, audio timing, pause/resume and rendering must be checked on a real phone.
 - Details, the touch-input path, the ABI strategy, unverified assumptions and the real-device checklist: [`docs/android.md`](docs/android.md).
+
+## Skin graphics (Stage 2A)
+
+The std::lite hit circle, approach circle and hit-circle numerals are
+packaged as embedded PNG resources. Original skin sources and audio
+assets are preserved under `TaktChase.Resources/Skins/lite/`.
+See [docs/skin-lite.md](docs/skin-lite.md).

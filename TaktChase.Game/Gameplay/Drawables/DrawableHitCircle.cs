@@ -1,11 +1,15 @@
+using System;
+using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
+using osu.Framework.Graphics.Textures;
 using osuTK;
 using osuTK.Graphics;
 using TaktChase.Game.Gameplay.Beatmaps;
 using TaktChase.Game.Gameplay.Judgements;
+using TaktChase.Game.Gameplay.Skin;
 using TaktChase.Game.UI;
 
 namespace TaktChase.Game.Gameplay.Drawables;
@@ -48,8 +52,8 @@ public partial class DrawableHitCircle : CompositeDrawable
 
     private readonly BeatmapDifficulty difficulty;
     private readonly HitCircleStyle style;
-    private readonly Drawable approach;
-    private readonly Drawable body;
+    private readonly Container approach;
+    private readonly Container body;
     private readonly double appearTime;
     private bool judged;
 
@@ -67,39 +71,120 @@ public partial class DrawableHitCircle : CompositeDrawable
         Position = hitObject.Position;
         Alpha = 0;
 
+        // The containers exist from construction so UpdateTime/ApplyResult are always safe; load() fills them with the skin
+        // artwork (or, if a texture is missing, with the original plain shapes).
         InternalChildren = new Drawable[]
         {
-            body = new CircularContainer
-            {
-                RelativeSizeAxes = Axes.Both,
-                Masking = true,
-                BorderThickness = diameter * 0.06f,
-                BorderColour = this.style.RingColour,
-                Children = new Drawable[]
-                {
-                    new Box { RelativeSizeAxes = Axes.Both, Colour = this.style.BodyColour },
-                    new SpriteText
-                    {
-                        Anchor = Anchor.Centre,
-                        Origin = Anchor.Centre,
-                        Text = hitObject.Number.ToString(),
-                        Font = FontUsage.Default.With(size: diameter * 0.5f, weight: "Bold"),
-                        Colour = TaktPalette.TEXT_PRIMARY,
-                    },
-                },
-            },
-            approach = new CircularContainer
+            body = new Container { RelativeSizeAxes = Axes.Both },
+            approach = new Container
             {
                 RelativeSizeAxes = Axes.Both,
                 Anchor = Anchor.Centre,
                 Origin = Anchor.Centre,
-                Masking = true,
-                BorderThickness = 3,
-                BorderColour = this.style.ApproachColour,
                 Alpha = 0,
-                Child = new Box { RelativeSizeAxes = Axes.Both, Alpha = 0, AlwaysPresent = true },
             },
         };
+    }
+
+    [BackgroundDependencyLoader]
+    private void load(TextureStore textures)
+    {
+        float diameter = (float)difficulty.CircleRadius * 2;
+        float scale = LiteSkinLayout.ScaleForDiameter(diameter);
+
+        var circleTexture = textures.Get(LiteSkinLayout.HIT_CIRCLE_TEXTURE);
+        var approachTexture = textures.Get(LiteSkinLayout.APPROACH_CIRCLE_TEXTURE);
+
+        if (circleTexture != null)
+            addSkinnedBody(textures, circleTexture, scale);
+        else
+            addFallbackBody(diameter);
+
+        if (approachTexture != null)
+        {
+            float size = LiteSkinLayout.APPROACH_IMAGE_SIZE * scale;
+            approach.Add(new Sprite
+            {
+                Anchor = Anchor.Centre,
+                Origin = Anchor.Centre,
+                Texture = approachTexture,
+                Size = new Vector2(size),
+            });
+        }
+        else
+            addFallbackApproach();
+    }
+
+    private void addSkinnedBody(TextureStore textures, Texture circleTexture, float scale)
+    {
+        float size = LiteSkinLayout.HIT_CIRCLE_IMAGE_SIZE * scale;
+
+        body.Add(new Sprite
+        {
+            Anchor = Anchor.Centre,
+            Origin = Anchor.Centre,
+            Texture = circleTexture,
+            Size = new Vector2(size),
+        });
+
+        var numbers = new Container { Anchor = Anchor.Centre, Origin = Anchor.Centre };
+        int number = Math.Max(0, HitObject.Number);
+        float numberScale = scale * LiteSkinLayout.NumberFitScale(number);
+
+        foreach (var digit in LiteSkinLayout.LayoutNumber(number))
+        {
+            var texture = textures.Get(LiteSkinLayout.DigitTexture(digit.Digit));
+            if (texture == null)
+                continue;
+
+            numbers.Add(new Sprite
+            {
+                Anchor = Anchor.Centre,
+                Origin = Anchor.Centre,
+                Texture = texture,
+                X = digit.CentreX * numberScale,
+                Size = new Vector2(digit.Width * numberScale, LiteSkinLayout.DIGIT_IMAGE_HEIGHT * numberScale),
+            });
+        }
+
+        body.Add(numbers);
+    }
+
+    private void addFallbackBody(float diameter)
+    {
+        body.Add(new CircularContainer
+        {
+            RelativeSizeAxes = Axes.Both,
+            Masking = true,
+            BorderThickness = diameter * 0.06f,
+            BorderColour = style.RingColour,
+            Children = new Drawable[]
+            {
+                new Box { RelativeSizeAxes = Axes.Both, Colour = style.BodyColour },
+                new SpriteText
+                {
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.Centre,
+                    Text = HitObject.Number.ToString(),
+                    Font = FontUsage.Default.With(size: diameter * 0.5f, weight: "Bold"),
+                    Colour = TaktPalette.TEXT_PRIMARY,
+                },
+            },
+        });
+    }
+
+    private void addFallbackApproach()
+    {
+        approach.Add(new CircularContainer
+        {
+            RelativeSizeAxes = Axes.Both,
+            Anchor = Anchor.Centre,
+            Origin = Anchor.Centre,
+            Masking = true,
+            BorderThickness = 3,
+            BorderColour = style.ApproachColour,
+            Child = new Box { RelativeSizeAxes = Axes.Both, Alpha = 0, AlwaysPresent = true },
+        });
     }
 
     /// <summary>Positions the approach circle and fade-in for the given gameplay time. Ignored once the circle is judged.</summary>
